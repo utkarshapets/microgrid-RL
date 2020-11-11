@@ -17,10 +17,10 @@ Please see transactive_control/gym-socialgame/gym_socialgame/envs for files pert
 OpenAI Gym environment for a social game.
 
 ### Installation
-1. clone the repo
+1. Clone the repo
 2. Install [dvc](https://dvc.org/doc/install) (with google drive support)
-  * On linux this is `pip install 'dvc[gdrive]'
-3. Run `python3 -m dvc add remote -d gdrive gdrive://1qaTn6IYd3cpiyJegDwwEhZ3LwrujK3_x
+  * On linux this is `pip install 'dvc[gdrive]'`
+3. Run `python3 -m dvc remote add -d gdrive gdrive://1qaTn6IYd3cpiyJegDwwEhZ3LwrujK3_x`
 4. Run `python3 -m dvc pull`
 
 ### Usage
