@@ -58,7 +58,7 @@ class SAC(OffPolicyRLModel):
         results, you must set `n_cpu_tf_sess` to 1.
     :param n_cpu_tf_sess: (int) The number of threads for TensorFlow operations
         If None, the number of cpu of the current machine will be used.
-    :param non_vec_environment: (env) an alternate gym environment if needed. 
+    :param non_vec_environment: (env) an alternate gym environment if needed.
     """
 
     def __init__(self, policy, env, gamma=0.99, learning_rate=3e-4, buffer_size=50000,
@@ -67,7 +67,8 @@ class SAC(OffPolicyRLModel):
                  gradient_steps=1, target_entropy='auto', action_noise=None,
                  random_exploration=0.0, verbose=0, tensorboard_log=None,
                  _init_setup_model=True, policy_kwargs=None, full_tensorboard_log=False,
-                 seed=None, n_cpu_tf_sess=None, non_vec_env = None, plotter_person_reaction = None):
+                 seed=None, n_cpu_tf_sess=None, non_vec_env = None, plotter_person_reaction=None,
+                 people_reaction_log_dir=None):
 
         super(SAC, self).__init__(policy=policy, env=env, replay_buffer=None, verbose=verbose,
                                   policy_base=SACPolicy, requires_vec_env=False, policy_kwargs=policy_kwargs,
@@ -125,6 +126,7 @@ class SAC(OffPolicyRLModel):
 
         # lucas added these
         self.non_vec_env = non_vec_env
+        self.people_reaction_log_dir = people_reaction_log_dir
         self.plotter_person_reaction = plotter_person_reaction
 
         if _init_setup_model:
@@ -359,14 +361,15 @@ class SAC(OffPolicyRLModel):
         return policy_loss, qf1_loss, qf2_loss, value_loss, entropy
 
     def learn(self, total_timesteps, callback=None,
-              log_interval=4, tb_log_name="SAC", 
+              log_interval=4, tb_log_name="SAC",
               reset_num_timesteps=True, replay_wrapper=None,
-              own_log_dir = None, 
+              own_log_dir = None,
               planning_steps = 0):
 
         new_tb_log = self._init_num_timesteps(reset_num_timesteps)
         callback = self._init_callback(callback)
 
+        # TODO: use builtin log writer instead of this old lib
         tb_configure(own_log_dir)
 
         steps_in_real_env = 0
@@ -422,14 +425,14 @@ class SAC(OffPolicyRLModel):
 
                 assert action.shape == self.env.action_space.shape
 
-                # if not planning: 
+                # if not planning:
                 #     new_obs, reward, done, info = self.env.step(unscaled_action)
-                # else: 
+                # else:
 
                 if not self.num_timesteps % (planning_steps + 1):
 
 
-                    if self.num_timesteps ==1: 
+                    if self.num_timesteps ==1:
                          # form the control
                         from sklearn.preprocessing import MinMaxScaler
                         grid_price = self.non_vec_env.prices[self.non_vec_env.day - 1]
@@ -438,7 +441,7 @@ class SAC(OffPolicyRLModel):
                         scaled_grid_price = np.squeeze(scaled_grid_price)
                         energy_consumptions = self.non_vec_env._simulate_humans(scaled_grid_price)
                         person_data_dict["control"] = {
-                            "x" : list(range(8, 18)), 
+                            "x" : list(range(8, 18)),
                             "grid_price" : scaled_grid_price,
                             "energy_consumption" : energy_consumptions["avg"],
                             "reward" : self.non_vec_env._get_reward(price = grid_price, energy_consumptions = energy_consumptions),
@@ -454,22 +457,18 @@ class SAC(OffPolicyRLModel):
                             "reward" : reward,
                         }
 
-                    if self.num_timesteps == 9501:
-
-                       
-                        # call the plotting statement 
-                        dir_split = own_log_dir.split("/")
-                        people_reaction_log_dir = dir_split[0]+ "/people_reaction_dir/" + dir_split[1]
-                        self.plotter_person_reaction(person_data_dict, people_reaction_log_dir)
+                    if self.num_timesteps == 9501 and self.people_reaction_log_dir:
+                        # call the plotting statement
+                        self.plotter_person_reaction(person_data_dict, self.people_reaction_log_dir)
 
 
                     new_obs, reward, done, info = self.env.step(unscaled_action) #, step_num = self.num_timesteps)
                     steps_in_real_env +=1
 
-                else: 
+                else:
                     print("planning step")
                     new_obs, reward, done, info = self.non_vec_env.planning_step(unscaled_action)
-                
+
                 # Only stop training if return value is False, not when it is None. This is for backwards
                 # compatibility with callbacks that have no return statement.
                 callback.update_locals(locals())
@@ -555,7 +554,7 @@ class SAC(OffPolicyRLModel):
                     mean_reward = round(float(np.mean(episode_rewards[-101:-1])), 1)
 
                 # substract 1 as we appended a new term just now
-                num_episodes = len(episode_rewards) - 1 
+                num_episodes = len(episode_rewards) - 1
                 # Display training infos
                 if self.verbose >= 1 and done and log_interval is not None and num_episodes % log_interval == 0:
                     fps = int(step / (time.time() - start_time))

@@ -35,7 +35,7 @@ def train(agent, num_steps, log_dir, planning_steps):
     agent.learn(
         total_timesteps=num_steps,
         log_interval=10,
-        own_log_dir=log_dir,
+        own_log_dir=os.path.join(log_dir, "tensorboard_logs/"),
         planning_steps=planning_steps,
     )
 
@@ -49,7 +49,7 @@ def eval_policy(model, env, num_eval_episodes: int, list_reward_per_episode=Fals
         Env: Gym environment for evaluation
         num_eval_episodes: (Int) number of episodes to evaluate policy
         list_reward_per_episode: (Boolean) Whether or not to return a list containing rewards per episode (instead of mean reward over all episodes)
-    
+
     """
     mean_reward, std_reward = evaluate_policy(
         model, env, num_eval_episodes, return_episode_rewards=list_reward_per_episode
@@ -79,7 +79,8 @@ def get_agent(env, args, non_vec_env=None):
             batch_size=args.batch_size,
             learning_starts=30,
             verbose=0,
-            tensorboard_log="./rl_tensorboard_logs/",
+            tensorboard_log=args.tensorboard_log_path,
+            people_reaction_log_dir=os.path.join(args.log_path, "people_reaction/"),
             plotter_person_reaction=utils.plotter_person_reaction,
         )
 
@@ -93,7 +94,7 @@ def get_agent(env, args, non_vec_env=None):
         elif args.policy_type == "lstm":
             from stable_baselines.common.policies import MlpLstmPolicy as policy
 
-        return PPO2(policy, env, verbose=0, tensorboard_log="./rl_tensorboard_logs/")
+        return PPO2(policy, env, verbose=0, tensorboard_log=args.tensorboard_log_path)
 
     else:
         raise NotImplementedError("Algorithm {} not supported. :( ".format(args.algo))
@@ -117,13 +118,11 @@ def get_environment(args, planning=False, include_non_vec_env=False):
 
     Args:
         args
-    
+
     Returns: Environment with action space compatible with algo
     """
     # Convert string args (which are supposed to be bool) into actual boolean values
     args_convert_bool(args)
-
-    log_dir = "own_tb_logs/" + args.own_tb_log
 
     # SAC only works in continuous environment
     if args.algo == "sac":
@@ -179,7 +178,7 @@ def get_environment(args, planning=False, include_non_vec_env=False):
             planning_flag=planning_flag,
             planning_steps=args.planning_steps,
             planning_model_type=args.planning_model,
-            own_tb_log=log_dir,
+            own_tb_log=args.tensorboard_log_path,
             reward_function=reward_function,
         )
 
@@ -218,6 +217,16 @@ def parse_args():
     parser.add_argument(
         "algo", help="Stable Baselines Algorithm", type=str, choices=["sac", "ppo"]
     )
+    parser.add_argument(
+        "exp_name", help="Name of the experiment. Used to name log files, etc.", type=str
+    )
+    parser.add_argument(
+        "--base_log_dir",
+        help="Base directory for tensorboard logs",
+        type=str,
+        default="./logs/"
+    )
+
     parser.add_argument(
         "--batch_size",
         help="Batch Size for sampling from replay buffer",
@@ -294,9 +303,6 @@ def parse_args():
         choices=["Oracle", "Baseline", "LSTM", "OLS"],
     )
     parser.add_argument(
-        "--own_tb_log", help="log directory to store your own tb logs", type=str
-    )
-    parser.add_argument(
         "--pricing_type",
         help="time of use or real time pricing",
         type=str,
@@ -320,6 +326,10 @@ def parse_args():
 
     args = parser.parse_args()
 
+    args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")
+    args.tensorboard_log_path = os.path.join(args.log_path, "tensorboard/")
+    print(args.log_path)
+
     return args
 
 
@@ -332,10 +342,8 @@ def main():
 
     # Create environments
 
-    log_dir = "own_tb_logs/" + args.own_tb_log
-
-    if os.path.exists(log_dir):
-        print("Choose a new name for the training dir!")
+    if os.path.exists(args.log_path):
+        print("Choose a new name for the experiment, log dir already exists")
         raise ValueError
 
     planning = (args.planning_steps > 0) or args.test_planning_env
@@ -352,11 +360,11 @@ def main():
     r_real = train(
         model,
         args.num_steps * (1 + args.planning_steps),
-        log_dir,
+        args.log_path,
         planning_steps=args.planning_steps,
     )
 
-    print("Training Completed! View TensorBoard logs at rl_tensorboard_logs/")
+    print("Training Completed! View TensorBoard logs at " + args.log_path)
 
     # Print evaluation of policy
     print("Beginning Evaluation")
@@ -365,7 +373,7 @@ def main():
     eval_policy(model, eval_env, num_eval_episodes=10)
 
     print(
-        "If there was no planning model involved, remember that the output will be in the rl_tensorboard_logs dir"
+        "If there was no planning model involved, remember that the output will be in the log dir"
     )
 
 
