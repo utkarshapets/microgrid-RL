@@ -363,14 +363,13 @@ class SAC(OffPolicyRLModel):
     def learn(self, total_timesteps, callback=None,
               log_interval=4, tb_log_name="SAC",
               reset_num_timesteps=True, replay_wrapper=None,
-              own_log_dir = None,
               planning_steps = 0):
 
         new_tb_log = self._init_num_timesteps(reset_num_timesteps)
         callback = self._init_callback(callback)
 
         # TODO: use builtin log writer instead of this old lib
-        tb_configure(own_log_dir)
+        tb_configure(self.tensorboard_log)
 
         steps_in_real_env = 0
         person_data_dict = {}

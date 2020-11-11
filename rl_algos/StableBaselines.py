@@ -26,7 +26,7 @@ import utils
 import os
 
 
-def train(agent, num_steps, log_dir, planning_steps):
+def train(agent, num_steps, planning_steps, **kwargs):
     """
     Purpose: Train agent in env, and then call eval function to evaluate policy
     """
@@ -35,8 +35,8 @@ def train(agent, num_steps, log_dir, planning_steps):
     agent.learn(
         total_timesteps=num_steps,
         log_interval=10,
-        own_log_dir=os.path.join(log_dir, "tensorboard_logs/"),
         planning_steps=planning_steps,
+        **kwargs
     )
 
 
@@ -79,7 +79,7 @@ def get_agent(env, args, non_vec_env=None):
             batch_size=args.batch_size,
             learning_starts=30,
             verbose=0,
-            tensorboard_log=args.tensorboard_log_path,
+            tensorboard_log=args.rl_log_path,
             people_reaction_log_dir=os.path.join(args.log_path, "people_reaction/"),
             plotter_person_reaction=utils.plotter_person_reaction,
         )
@@ -94,7 +94,7 @@ def get_agent(env, args, non_vec_env=None):
         elif args.policy_type == "lstm":
             from stable_baselines.common.policies import MlpLstmPolicy as policy
 
-        return PPO2(policy, env, verbose=0, tensorboard_log=args.tensorboard_log_path)
+        return PPO2(policy, env, verbose=0, tensorboard_log=args.rl_log_path)
 
     else:
         raise NotImplementedError("Algorithm {} not supported. :( ".format(args.algo))
@@ -178,7 +178,7 @@ def get_environment(args, planning=False, include_non_vec_env=False):
             planning_flag=planning_flag,
             planning_steps=args.planning_steps,
             planning_model_type=args.planning_model,
-            own_tb_log=args.tensorboard_log_path,
+            own_tb_log=args.rl_log_path,
             reward_function=reward_function,
         )
 
@@ -327,7 +327,7 @@ def parse_args():
     args = parser.parse_args()
 
     args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")
-    args.tensorboard_log_path = os.path.join(args.log_path, "tensorboard/")
+    args.rl_log_path = os.path.join(args.log_path, "rl/")
 
     return args
 
@@ -359,8 +359,8 @@ def main():
     r_real = train(
         model,
         args.num_steps * (1 + args.planning_steps),
-        args.log_path,
         planning_steps=args.planning_steps,
+        tb_log_name=args.exp_name
     )
 
     print("Training Completed! View TensorBoard logs at " + args.log_path)
