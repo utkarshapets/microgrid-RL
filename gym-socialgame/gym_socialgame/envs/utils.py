@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.optimize import minimize
 import os
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler 
+from sklearn.preprocessing import MinMaxScaler
 
 #data_path = os.path.join(os.getcwd(), "baselines", "behavioral_sim", "building_data.csv")
 # csv_path = os.path.dirname(os.path.realpath(__file__)) + "/building_data.csv"
@@ -19,16 +19,15 @@ def price_signal(day = 45, type_of_DR = "real_time_pricing"):
         optionally, we can return the optimized demand, which is the building
         calculating where the net demand should be allocated
     """
-    csv_path = "building_data.csv"
-    csv_path_2 = "../gym-socialgame/gym_socialgame/envs/building_data.csv"
-    csv_path_3 = "/global/home/users/lucas_spangher/transactive_control/gym-socialgame/gym_socialgame/envs/building_data.csv"
-    try:
-        df = pd.read_csv(csv_path)
-    except:
-        try:
-            df = pd.read_csv(csv_path_2)
-        except:
-            df = pd.read_csv(csv_path_3)
+    csv_paths = ["building_data.csv", "../gym-socialgame/gym_socialgame/envs/building_data.csv", "./gym-socialgame/gym_socialgame/envs/building_data.csv"]
+    df = None
+    for path in csv_paths:
+        if os.path.exists(path):
+            df = pd.read_csv(path)
+            break
+
+    if df is None:
+        assert False, "Could not find building_data.csv, make sure you dvc pull"
 
     pv = 0.001*np.array(df['PV (W)'].tolist())
     price = np.array(df['Price( $ per kWh)'].tolist())
@@ -50,7 +49,7 @@ def price_signal(day = 45, type_of_DR = "real_time_pricing"):
 
         fixed_load = 0.9*netdemand_24
         controllable_load = sum(0.1*netdemand_24)
-        
+
         def objective(x):
             load = fixed_load + x
             cost = np.multiply(price_24,load)
@@ -74,7 +73,7 @@ def price_signal(day = 45, type_of_DR = "real_time_pricing"):
         sol = minimize(objective, x0, constraints=cons)
         return sol
 
-    if type_of_DR == "real_time_pricing":    
+    if type_of_DR == "real_time_pricing":
         sol = optimise_24h(netdemand_24,price_24)
         x = sol['x']
         diff = x - 0.1*netdemand_24
@@ -88,9 +87,18 @@ def price_signal(day = 45, type_of_DR = "real_time_pricing"):
         return "error!!!"
 
 
+def fourier_points_from_action(action, points_length, fourier_basis_size):
+    assert fourier_basis_size == (action.size + 1) // 2, "Incorrect fourier basis size for actions"
+    root_points = (action[0]/2)*np.ones(points_length)
+    inp = np.linspace(0, 1, points_length)
+    for k in range(1, fourier_basis_size):
+        ak, bk = action[2*k - 1], action[2*k]
+        root_points += ak * np.sin(2*np.pi*k*inp) + bk * np.cos(2*np.pi*k*inp)
 
-
-
+    points = root_points**2
+    #TODO: More elegant solution than clipping
+    points = np.clip(points, 0, 10)
+    return points
 
 
 

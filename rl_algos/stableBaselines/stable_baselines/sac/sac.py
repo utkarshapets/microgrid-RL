@@ -451,7 +451,7 @@ class SAC(OffPolicyRLModel):
                         person_data_dict["Step " + str(self.num_timesteps)] = {
                             "x" : list(range(8, 18)),
                             "grid_price" : self.non_vec_env.prices[self.non_vec_env.day - 1],
-                            "points" : self.non_vec_env.action,
+                            "action" : self.non_vec_env.action,
                             "energy_consumption" : self.non_vec_env.prev_energy,
                             "reward" : reward,
                         }
@@ -483,7 +483,6 @@ class SAC(OffPolicyRLModel):
                     obs_, new_obs_, reward_ = obs, new_obs, reward
 
                 if not self.num_timesteps % (planning_steps + 1):
-                    print("writing real world step to TB")
                     tb_log_value("reward_in_environment", reward_, steps_in_real_env)
 
                 tb_log_value("reward_planning", reward_, self.num_timesteps)
@@ -635,4 +634,3 @@ class SAC(OffPolicyRLModel):
 
         params_to_save = self.get_parameters()
 
-        self._save_to_file(save_path, data=data, params=params_to_save, cloudpickle=cloudpickle)

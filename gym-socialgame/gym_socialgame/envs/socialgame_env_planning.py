@@ -14,12 +14,12 @@ import pickle
 
 
 class SocialGamePlanningEnv(SocialGameEnv):
-    def __init__(self, 
-        action_space_string = "continuous", 
-        response_type_string = "l", 
+    def __init__(self,
+        action_space_string = "continuous",
+        response_type_string = "l",
         number_of_participants = 10,
-        one_day = 0, 
-        energy_in_state = False, 
+        one_day = 0,
+        energy_in_state = False,
         yesterday_in_state = False,
         day_of_week = False,
         pricing_type= "TOU",
@@ -29,11 +29,11 @@ class SocialGamePlanningEnv(SocialGameEnv):
         planning_model_type = "Oracle",
         own_tb_log = None):
 
-        super().__init__(action_space_string, 
-        response_type_string, 
+        super().__init__(action_space_string,
+        response_type_string,
         number_of_participants,
-        one_day, 
-        energy_in_state, 
+        one_day,
+        energy_in_state,
         yesterday_in_state,
         day_of_week,
         pricing_type,
@@ -49,13 +49,13 @@ class SocialGamePlanningEnv(SocialGameEnv):
     ):
 
         """
-        Function for calling the planning model and producing an average response 
-        
-        Inputs: 
-        
+        Function for calling the planning model and producing an average response
+
+        Inputs:
+
         Action: [10-float] a list of 10 floats that are the points provided by the agent to the env
         day_of_week: [int] a number indicating the day of the week
-        planning_model_type: str, either "Oracle" for a perfect planning model, 
+        planning_model_type: str, either "Oracle" for a perfect planning model,
             "LSTM" for the rnn implementation, "OLS" for linear regression, or "
             baseline" for a mean estimate
         loaded_model: pass in a loaded model
@@ -176,17 +176,17 @@ class SocialGamePlanningEnv(SocialGameEnv):
 
     def step(self, action, step_num=0):
         """
-        Purpose: Takes a step in the real environment 
+        Purpose: Takes a step in the real environment
 
         Args:
             Action: 10-dim vector detailing player incentive for each hour (8AM - 5PM)
-        
-        Returns: 
+
+        Returns:
             Observation: State for the next day
             Reward: Reward for said action
             Done: Whether or not the day is done (should always be True b/c of 1-step trajectory)
             Info: Other info (primarily for gym env based library compatibility)
-        
+
         Exceptions:
             raises AssertionError if action is not in the action space
         """
@@ -202,12 +202,6 @@ class SocialGamePlanningEnv(SocialGameEnv):
         prev_price = self.prices[(self.day)]
         self.day = (self.day + 1) % 365
         self.curr_iter += 1
-        # if self.curr_iter > 0:
-        #     done = True
-        # else:
-        #     done = False
-
-        self.action = action
 
         points = self._points_from_action(action)
 
@@ -229,17 +223,17 @@ class SocialGamePlanningEnv(SocialGameEnv):
 
     def planning_step(self, action, step_num=0):  ## TODO: replace load model in SAC
         """
-        Purpose: Takes a step in the environment 
+        Purpose: Takes a step in the environment
 
         Args:
             Action: 10-dim vector detailing player incentive for each hour (8AM - 5PM)
-        
-        Returns: 
+
+        Returns:
             Observation: State for the next day
             Reward: Reward for said action
             Done: Whether or not the day is done (should always be True b/c of 1-step trajectory)
             Info: Other info (primarily for gym env based library compatibility)
-        
+
         Exceptions:
             raises AssertionError if action is not in the action space
         """

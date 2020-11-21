@@ -71,6 +71,9 @@ def get_agent(env, args, non_vec_env=None):
     if args.algo == "sac":
         from stableBaselines.stable_baselines.sac.sac import SAC as mySAC
         from stable_baselines.sac.policies import MlpPolicy as policy
+        plotter_person_reaction = utils.plotter_person_reaction
+        if args.action_space == "fourier":
+            plotter_person_reaction = utils.fourier_plotter_person_reaction(10, args.fourier_basis_size)
 
         return mySAC(
             policy,
@@ -81,7 +84,7 @@ def get_agent(env, args, non_vec_env=None):
             verbose=0,
             tensorboard_log=args.rl_log_path,
             people_reaction_log_dir=os.path.join(args.log_path, "people_reaction/"),
-            plotter_person_reaction=utils.plotter_person_reaction,
+            plotter_person_reaction=plotter_person_reaction,
         )
 
     # I (Akash) still need to study PPO to understand it, I implemented b/c I know Joe's work used PPO
@@ -112,7 +115,7 @@ def args_convert_bool(args):
         args.test_planning_env = utils.string2bool(args.test_planning_env)
 
 
-def get_environment(args, planning=False, include_non_vec_env=False):
+def get_environment(args, include_non_vec_env=False):
     """
     Purpose: Create environment for algorithm given by args. algo
 
@@ -122,11 +125,16 @@ def get_environment(args, planning=False, include_non_vec_env=False):
     Returns: Environment with action space compatible with algo
     """
     # Convert string args (which are supposed to be bool) into actual boolean values
-    args_convert_bool(args)
+
+    print(args.planning_steps, args.test_planning_env)
+    planning = (args.planning_steps > 0) or args.test_planning_env
 
     # SAC only works in continuous environment
     if args.algo == "sac":
-        action_space_string = "continuous"
+        if args.action_space == "fourier":
+            action_space_string = "fourier"
+        else:
+            action_space_string = "continuous"
 
     # For algos (e.g. ppo) which can handle discrete or continuous case
     # Note: PPO typically uses normalized environment (#TODO)
@@ -153,6 +161,7 @@ def get_environment(args, planning=False, include_non_vec_env=False):
         reward_function = args.reward_function
 
     if not planning:
+        print("Not planning, phew")
         socialgame_env = gym.make(
             "gym_socialgame:socialgame{}".format(env_id),
             action_space_string=action_space_string,
@@ -163,6 +172,7 @@ def get_environment(args, planning=False, include_non_vec_env=False):
             energy_in_state=args.energy,
             pricing_type=args.pricing_type,
             reward_function=reward_function,
+            fourier_basis_size=args.fourier_basis_size
         )
     else:
         # go into the planning mode
@@ -179,7 +189,7 @@ def get_environment(args, planning=False, include_non_vec_env=False):
             planning_steps=args.planning_steps,
             planning_model_type=args.planning_model,
             own_tb_log=args.rl_log_path,
-            reward_function=reward_function,
+            reward_function=reward_function
         )
 
     # Check to make sure any new changes to environment follow OpenAI Gym API
@@ -251,7 +261,14 @@ def parse_args():
         "--action_space",
         help="Action Space for Algo (only used for algos that are compatable with both discrete & cont",
         default="c",
-        choices=["c", "d"],
+        choices=["c", "d", "fourier"],
+    )
+    parser.add_argument(
+        "--fourier_basis_size",
+        help="Fourier basis size to use when using fourier action space",
+        type=int,
+        default=4,
+        choices=list(range(100))
     )
     parser.add_argument(
         "--response",
@@ -313,17 +330,16 @@ def parse_args():
         "--test_planning_env",
         help="flag if you want to test vanilla planning",
         type=str,
-        default="F",
-        choices=["T", "F"],
+        default='F',
+        choices=['T', 'F'],
     )
     parser.add_argument(
         "--reward_function",
         help="reward function to test",
         type=str,
-        default="scaled_cost_distance",
+        default="lcr",
         choices=["scaled_cost_distance", "log_cost_regularized", "scd", "lcr"],
     )
-
     args = parser.parse_args()
 
     args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")
@@ -338,6 +354,7 @@ def main():
 
     # Print args for reference
     print(args)
+    args_convert_bool(args)
 
     # Create environments
 
@@ -345,10 +362,8 @@ def main():
         print("Choose a new name for the experiment, log dir already exists")
         raise ValueError
 
-    planning = (args.planning_steps > 0) or args.test_planning_env
-
     env, socialgame_env = get_environment(
-        args, planning=planning, include_non_vec_env=True
+        args, include_non_vec_env=True
     )
 
     # Create Agent
