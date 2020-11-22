@@ -451,7 +451,7 @@ class SAC(OffPolicyRLModel):
                         person_data_dict["Step " + str(self.num_timesteps)] = {
                             "x" : list(range(8, 18)),
                             "grid_price" : self.non_vec_env.prices[self.non_vec_env.day - 1],
-                            "action" : self.non_vec_env.action,
+                            "action" : unscaled_action,
                             "energy_consumption" : self.non_vec_env.prev_energy,
                             "reward" : reward,
                         }
@@ -506,6 +506,8 @@ class SAC(OffPolicyRLModel):
                     ep_done = np.array([done]).reshape((1, -1))
                     tf_util.total_episode_reward_logger(self.episode_reward, ep_reward,
                                                         ep_done, writer, self.num_timesteps)
+                    tf_util.log_histogram(writer, "action_hist", unscaled_action, self.num_timesteps)
+
 
                 if self.num_timesteps % self.train_freq == 0:
                     callback.on_rollout_end()
