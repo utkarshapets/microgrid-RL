@@ -13,6 +13,7 @@ from stableBaselines.stable_baselines.common.env_checker import (  # pylint: dis
 )
 
 import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 from tensorboard_logger import (  # pylint: disable=import-error, no-name-in-module
     configure as tb_configure,
@@ -69,12 +70,14 @@ def get_agent(env, args, non_vec_env=None):
     Exceptions: Raises exception if args.algo unknown (not needed b/c we filter in the parser, but I added it for modularity)
     """
     if args.algo == "sac":
+        print("Importing")
         from stableBaselines.stable_baselines.sac.sac import SAC as mySAC
         from stable_baselines.sac.policies import MlpPolicy as policy
         plotter_person_reaction = utils.plotter_person_reaction
         if args.action_space == "fourier":
             plotter_person_reaction = utils.fourier_plotter_person_reaction(10, args.fourier_basis_size)
 
+        print("Makin mySac")
         return mySAC(
             policy,
             env,
@@ -365,9 +368,11 @@ def main():
     env, socialgame_env = get_environment(
         args, include_non_vec_env=True
     )
+    print("Got environment, getting agent")
 
     # Create Agent
     model = get_agent(env, args, non_vec_env=socialgame_env)
+    print("Got agent")
 
     # Train algo, (logging through Tensorboard)
     print("Beginning Testing!")

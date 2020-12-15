@@ -74,13 +74,7 @@ class SocialGameEnv(gym.Env):
         #Create Observation Space (aka State Space)
         self.observation_space = self._create_observation_space()
 
-        if pricing_type=="TOU":
-            self.pricing_type = "time_of_use"
-        elif pricing_type == "RTP":
-            self.pricing_type = "real_time_pricing"
-        else:
-            print("Wrong pricing type")
-            raise ValueError
+        self.pricing_type = "real_time_pricing" if pricing_type.upper() == "RTP" else "time_of_use"
 
         self.prices = self._get_prices()
         #Day corresponds to day # of the yr
@@ -222,28 +216,26 @@ class SocialGameEnv(gym.Env):
 
         type_of_DR = self.pricing_type
 
-        if self.one_day != -1:
+        if self.one_day != 0:
             # If one_day we repeat the price signals from a fixed day
             # Tweak One_Day Price Signal HERE
             price = price_signal(self.one_day, type_of_DR=type_of_DR)
             price = np.array(price[8:18])
-            if np.mean(price)==price[2]:
+            if np.mean(price) == price[2]:
                 price[3:6]+=.3
             price = np.maximum(0.01 * np.ones_like(price), price)
 
             for i in range(365):
                 all_prices.append(price)
         else:
-            day = 0
-            for i in range(365):
-                price = price_signal(day + 1, type_of_DR=type_of_DR)
+            for day in range(1, 366):
+                price = price_signal(day, type_of_DR=type_of_DR)
                 price = np.array(price[8:18])
                 # put a floor on the prices so we don't have negative prices
-                if np.mean(price)==price[2]:
-                    price[3:6]+=.3
+                #if np.mean(price) == price[2]:
+                #    price[3:6]+=.3
                 price = np.maximum(0.01 * np.ones_like(price), price)
                 all_prices.append(price)
-                day += 1
 
         return np.array(all_prices)
 
@@ -327,16 +319,18 @@ class SocialGameEnv(gym.Env):
                 player_energy = energy_consumptions[player_name]
                 player_reward = Reward(player_energy, price, player_min_demand, player_max_demand)
 
-                if reward_function == "scaled_cost_distance":
-                    player_ideal_demands = player_reward.ideal_use_calculation()
-                    reward = player_reward.scaled_cost_distance(player_ideal_demands)
+                #if reward_function == "scaled_cost_distance":
+                #    player_ideal_demands = player_reward.ideal_use_calculation()
+                #    reward = player_reward.scaled_cost_distance(player_ideal_demands)
 
-                elif reward_function == "log_cost_regularized":
-                    reward = player_reward.log_cost_regularized()
+                #elif reward_function == "log_cost_regularized":
+                #    reward = player_reward.log_cost_regularized()
+
+                reward = player_reward.log_cost_regularized()
 
                 total_reward += reward
 
-        return total_reward
+        return total_reward / self.number_of_participants
 
     def step(self, action):
         """
@@ -373,11 +367,7 @@ class SocialGameEnv(gym.Env):
         self.day = (self.day + 1) % 365
         self.curr_iter += 1
 
-        if self.curr_iter > 0:
-            done = True
-            self.curr_iter = 0
-        else:
-            done = False
+        done = self.curr_iter > 0
 
         points = self._points_from_action(action)
 
@@ -386,7 +376,6 @@ class SocialGameEnv(gym.Env):
         # HACK ALERT. USING AVG ENERGY CONSUMPTION FOR STATE SPACE. this will not work if people are not all the same
 
         self.prev_energy = energy_consumptions["avg"]
-
 
         observation = self._get_observation()
         reward = self._get_reward(prev_price, energy_consumptions, reward_function = self.reward_function)

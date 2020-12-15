@@ -13,4 +13,4 @@ RUN pip install -e ./gym-socialgame/
 COPY ./rl_algos/ ./rl_algos/
 RUN pip install -e ./rl_algos/stableBaselines/
 
-WORKDIR ./rl_algos/
+WORKDIR ./tc/
