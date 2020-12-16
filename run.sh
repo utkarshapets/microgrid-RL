@@ -1,9 +1,5 @@
 #!/bin/sh
 
-docker build . -t tc-temp
-if $1
-then
-  docker run --gpus=all -it --rm -u $(id -u):$(id -g) -v "$(pwd):/tc" tc-temp $1
-else
-  docker run --gpus=all -it --rm -u $(id -u):$(id -g) -v "$(pwd):/tc" tc-temp
-fi
+DOCKER_BUILDKIT=1 docker build . -t tc-temp
+
+docker run --gpus=all -it --rm --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -u $(id -u):$(id -g) -v "$(pwd):/tc" tc-temp

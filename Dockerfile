@@ -1,4 +1,4 @@
-FROM "tensorflow/tensorflow:1.15.4-gpu-py3"
+FROM "nvcr.io/nvidia/tensorflow:20.11-tf1-py3"
 
 RUN /usr/bin/python3 -m pip install --upgrade pip
 
@@ -13,4 +13,4 @@ RUN pip install -e ./gym-socialgame/
 COPY ./rl_algos/ ./rl_algos/
 RUN pip install -e ./rl_algos/stableBaselines/
 
-WORKDIR ./tc/
+WORKDIR /tc

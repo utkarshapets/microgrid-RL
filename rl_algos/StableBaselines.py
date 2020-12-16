@@ -27,7 +27,7 @@ import utils
 import os
 
 
-def train(agent, num_steps, planning_steps, **kwargs):
+def train(agent, num_steps, planning_steps, tb_log_name):
     """
     Purpose: Train agent in env, and then call eval function to evaluate policy
     """
@@ -37,7 +37,7 @@ def train(agent, num_steps, planning_steps, **kwargs):
         total_timesteps=num_steps,
         log_interval=10,
         planning_steps=planning_steps,
-        **kwargs
+        tb_log_name=tb_log_name
     )
 
 
