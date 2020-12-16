@@ -164,7 +164,6 @@ def get_environment(args, include_non_vec_env=False):
         reward_function = args.reward_function
 
     if not planning:
-        print("Not planning, phew")
         socialgame_env = gym.make(
             "gym_socialgame:socialgame{}".format(env_id),
             action_space_string=action_space_string,
@@ -284,7 +283,7 @@ def parse_args():
         "--one_day",
         help="Specific Day of the year to Train on (default = None, train over entire yr)",
         type=int,
-        default=-1,
+        default=0,
         choices=[i for i in range(-1, 366)],
     )
     parser.add_argument(

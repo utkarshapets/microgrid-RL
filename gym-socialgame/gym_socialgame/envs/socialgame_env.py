@@ -217,23 +217,26 @@ class SocialGameEnv(gym.Env):
         type_of_DR = self.pricing_type
 
         if self.one_day != 0:
+            print("Single Day")
             # If one_day we repeat the price signals from a fixed day
             # Tweak One_Day Price Signal HERE
             price = price_signal(self.one_day, type_of_DR=type_of_DR)
             price = np.array(price[8:18])
             if np.mean(price) == price[2]:
-                price[3:6]+=.3
+                print("Given constant price signal")
+                price[3:6] += 0.3
             price = np.maximum(0.01 * np.ones_like(price), price)
-
             for i in range(365):
                 all_prices.append(price)
         else:
+            print("All days")
             for day in range(1, 366):
                 price = price_signal(day, type_of_DR=type_of_DR)
                 price = np.array(price[8:18])
                 # put a floor on the prices so we don't have negative prices
-                #if np.mean(price) == price[2]:
-                #    price[3:6]+=.3
+                if np.mean(price) == price[2]:
+                    print("Given constant price signal")
+                    price[3:6] += 0.3
                 price = np.maximum(0.01 * np.ones_like(price), price)
                 all_prices.append(price)
 
