@@ -79,7 +79,7 @@ def get_agent(env, args, non_vec_env=None):
         action_to_prices_fn = lambda x: (x + 1) * 5 #normal continuous
         if args.action_space == "fourier":
             plotter_person_reaction = utils.fourier_plotter_person_reaction(10, args.fourier_basis_size)
-            action_to_prices_fn = lambda x: env_utils.fourier_points_from_action(x, 10, args.fourier_basis_size)
+            # action_to_prices_fn = lambda x: env_utils.fourier_points_from_action(x, 10, args.fourier_basis_size)
 
 
 
