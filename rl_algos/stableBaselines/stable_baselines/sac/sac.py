@@ -512,6 +512,7 @@ class SAC(OffPolicyRLModel):
                     if self.action_to_prices_fn:
                         prices = self.action_to_prices_fn(unscaled_action)
                         tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
+                        tf_util.log_scalar(writer, "constant_load_price", np.sum(prices), self.num_timesteps)
 
 
                 if self.num_timesteps % self.train_freq == 0:
