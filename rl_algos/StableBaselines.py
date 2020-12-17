@@ -12,6 +12,8 @@ from stableBaselines.stable_baselines.common.env_checker import (  # pylint: dis
     check_env,
 )
 
+import gym_socialgame.envs.utils as env_utils
+
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
@@ -74,8 +76,12 @@ def get_agent(env, args, non_vec_env=None):
         from stableBaselines.stable_baselines.sac.sac import SAC as mySAC
         from stable_baselines.sac.policies import MlpPolicy as policy
         plotter_person_reaction = utils.plotter_person_reaction
+        action_to_prices_fn = lambda x: (x + 1) * 5 #normal continuous
         if args.action_space == "fourier":
             plotter_person_reaction = utils.fourier_plotter_person_reaction(10, args.fourier_basis_size)
+            action_to_prices_fn = lambda x: env_utils.fourier_points_from_action(x, 10, args.fourier_basis_size)
+
+
 
         print("Makin mySac")
         return mySAC(
@@ -88,6 +94,7 @@ def get_agent(env, args, non_vec_env=None):
             tensorboard_log=args.rl_log_path,
             people_reaction_log_dir=os.path.join(args.log_path, "people_reaction/"),
             plotter_person_reaction=plotter_person_reaction,
+            action_to_prices_fn=action_to_prices_fn
         )
 
     # I (Akash) still need to study PPO to understand it, I implemented b/c I know Joe's work used PPO
@@ -387,7 +394,7 @@ def main():
     # Print evaluation of policy
     print("Beginning Evaluation")
 
-    eval_env = get_environment(args, planning=False)
+    eval_env = get_environment(args)
     eval_policy(model, eval_env, num_eval_episodes=10)
 
     print(

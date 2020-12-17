@@ -59,6 +59,7 @@ class SAC(OffPolicyRLModel):
     :param n_cpu_tf_sess: (int) The number of threads for TensorFlow operations
         If None, the number of cpu of the current machine will be used.
     :param non_vec_environment: (env) an alternate gym environment if needed.
+    :param action_to_prices_fn: (fn action -> prices) function that takes action and outputs price curve
     """
 
     def __init__(self, policy, env, gamma=0.99, learning_rate=3e-4, buffer_size=50000,
@@ -68,7 +69,7 @@ class SAC(OffPolicyRLModel):
                  random_exploration=0.0, verbose=0, tensorboard_log=None,
                  _init_setup_model=True, policy_kwargs=None, full_tensorboard_log=False,
                  seed=None, n_cpu_tf_sess=None, non_vec_env = None, plotter_person_reaction=None,
-                 people_reaction_log_dir=None):
+                 people_reaction_log_dir=None, action_to_prices_fn=lambda x: x):
 
         super(SAC, self).__init__(policy=policy, env=env, replay_buffer=None, verbose=verbose,
                                   policy_base=SACPolicy, requires_vec_env=False, policy_kwargs=policy_kwargs,
@@ -128,6 +129,7 @@ class SAC(OffPolicyRLModel):
         self.non_vec_env = non_vec_env
         self.people_reaction_log_dir = people_reaction_log_dir
         self.plotter_person_reaction = plotter_person_reaction
+        self.action_to_prices_fn = action_to_prices_fn
 
         if _init_setup_model:
             self.setup_model()
@@ -506,7 +508,10 @@ class SAC(OffPolicyRLModel):
                     ep_done = np.array([done]).reshape((1, -1))
                     tf_util.total_episode_reward_logger(self.episode_reward, ep_reward,
                                                         ep_done, writer, self.num_timesteps)
-                    tf_util.log_histogram(writer, "action_hist", unscaled_action, self.num_timesteps)
+                    tf_util.log_histogram(writer, "action_hist", unscaled_action, self.num_timesteps, flush=False)
+                    if self.action_to_prices_fn:
+                        prices = self.action_to_prices_fn(unscaled_action)
+                        tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
 
 
                 if self.num_timesteps % self.train_freq == 0:

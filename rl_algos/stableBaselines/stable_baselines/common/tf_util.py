@@ -3,6 +3,7 @@ import collections
 import functools
 import multiprocessing
 from typing import Set
+import io
 
 import numpy as np
 import tensorflow as tf
@@ -510,7 +511,7 @@ def total_episode_reward_logger(rew_acc, rewards, masks, writer, steps):
     return rew_acc
 
 # From https://stackoverflow.com/questions/42012906/create-a-custom-tensorflow-histogram-summary
-def log_histogram(writer, tag, values, step, bins=1000):
+def log_histogram(writer, tag, values, step, bins=1000, flush=True):
     # Convert to a numpy array
     values = np.array(values)
 
@@ -539,4 +540,57 @@ def log_histogram(writer, tag, values, step, bins=1000):
     # Create and write Summary
     summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
     writer.add_summary(summary, step)
-    writer.flush()
+    if flush:
+        writer.flush()
+
+# Hacks the histogram proto to log the vec
+def log_vec_as_histogram(writer, tag, vec, step, flush=True):
+    values = np.array(vec)
+    assert len(values.shape) == 1
+
+    hist = tf.HistogramProto()
+    hist.min = np.min(values)
+    hist.max = np.max(values)
+    hist.num = values.size
+    hist.sum = float(np.sum(values))
+    hist.sum_squares = float(np.sum(values**2))
+
+    for ind in range(1,len(values) + 1):
+        hist.bucket_limit.append(ind)
+    for c in values:
+        hist.bucket.append(c)
+
+    summary = tf.Summary(value=[tf.Summary.Value(tag=tag, histo=hist)])
+    writer.add_summary(summary, step)
+    if flush:
+        writer.flush()
+
+
+def log_matplotlib_fig(writer, tag, step, fig, dpi=80, flush=True):
+    # figure to numpy array
+    io_buf = io.BytesIO()
+    fig.savefig(io_buf, format='raw', dpi=dpi)
+    io_buf.seek(0)
+    img = np.reshape(np.frombuffer(io_buf.getvalue(), dtype=np.uint8),
+                     newshape=(int(fig.bbox.bounds[3]), int(fig.bbox.bounds[2]), -1))
+    io_buf.close()
+
+    # Save encoded png stringio
+    s = StringIO()
+    plt.imsave(s, img_arr, format='png')
+
+    # Make image summary proto
+    img_sum = tf.Summary.Image(encoded_image_string=s.getvalue(),
+                               height=img.shape[0],
+                               width=img.shape[1])
+    # Create a Summary value
+    sum_value = tf.Summary.Value(tag=tag, image=img_sum)
+
+    # Create and write Summary
+    summary = tf.Summary(value=[sum_value])
+    self.writer.add_summary(summary, step)
+    if flush:
+        writer.flush()
+
+
+
