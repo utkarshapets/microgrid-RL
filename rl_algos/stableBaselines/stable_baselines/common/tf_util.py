@@ -549,11 +549,11 @@ def log_vec_as_histogram(writer, tag, vec, step, flush=True):
     assert len(values.shape) == 1
 
     hist = tf.HistogramProto()
-    hist.min = np.min(values)
-    hist.max = np.max(values)
-    hist.num = values.size
-    hist.sum = float(np.sum(values))
-    hist.sum_squares = float(np.sum(values**2))
+    hist.min = 0
+    hist.max = values.size
+    hist.num = np.sum(values)
+    hist.sum = np.sum(values * np.arange(values.size))
+    hist.sum_squares = np.sum(values**2 * np.arange(values.size))
 
     for ind in range(1,len(values) + 1):
         hist.bucket_limit.append(ind)
