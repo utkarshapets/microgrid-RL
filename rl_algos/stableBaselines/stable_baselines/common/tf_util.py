@@ -545,7 +545,7 @@ def log_histogram(writer, tag, values, step, bins=1000, flush=True):
 
 # Hacks the histogram proto to log the vec
 def log_vec_as_histogram(writer, tag, vec, step, flush=True):
-    values = np.array(vec)
+    values = np.absolute(np.array(vec))
     assert len(values.shape) == 1
 
     hist = tf.HistogramProto()

@@ -223,9 +223,8 @@ class SocialGameEnv(gym.Env):
         type_of_DR = self.pricing_type
 
         if self.manual_tou_magnitude:
-            price = np.ones((365, 10))
-            price[:,3:6] = self.manual_tou_magnitude
-            price /= np.max(price)
+            price = 0.103 * np.ones((365, 10))
+            price[:,5:8] = self.manual_tou_magnitude
             print("Using manual tou pricing", price[0])
             return price
 
