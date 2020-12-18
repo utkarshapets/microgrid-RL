@@ -97,7 +97,8 @@ def get_agent(env, args, non_vec_env=None):
             people_reaction_log_dir=os.path.join(args.log_path, "people_reaction/"),
             plotter_person_reaction=plotter_person_reaction,
             action_to_prices_fn=action_to_prices_fn,
-            learning_rate=args.learning_rate
+            learning_rate=args.learning_rate,
+            tau=args.tau
         )
 
     # I (Akash) still need to study PPO to understand it, I implemented b/c I know Joe's work used PPO
@@ -365,6 +366,12 @@ def parse_args():
         help="learning rate of the the agent",
         type=float,
         default=3e-4,
+    )
+    parser.add_argument(
+        "--tau",
+        help="the soft update coefficient",
+        type=float,
+        default=0.005,
     )
     args = parser.parse_args()
 
