@@ -308,7 +308,7 @@ def parse_args():
         "--num_players",
         help="Number of players ([1, 20]) in social game",
         type=int,
-        default=1,
+        default=10,
         choices=[i for i in range(1, 21)],
     )
     parser.add_argument(

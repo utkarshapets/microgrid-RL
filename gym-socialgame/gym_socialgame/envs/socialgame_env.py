@@ -225,7 +225,7 @@ class SocialGameEnv(gym.Env):
         if self.manual_tou_magnitude:
             price = np.ones((365, 10))
             price[:,3:6] = self.manual_tou_magnitude
-            price /= np.sum(price[0])
+            price /= np.max(price)
             print("Using manual tou pricing", price[0])
             return price
 
