@@ -136,7 +136,7 @@ def unscale_action(action_space, scaled_action):
     :param action: (np.ndarray)
     :return: (np.ndarray)
     """
-    print(action_space.bounded_below)
+
     if np.any(action_space.bounded_below) and not np.any(action_space.bounded_above): # Exponential
         unif = 0.5*(scaled_action + 1.0)
         return -np.log(unif)

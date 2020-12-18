@@ -73,7 +73,6 @@ def get_agent(env, args, non_vec_env=None):
     Exceptions: Raises exception if args.algo unknown (not needed b/c we filter in the parser, but I added it for modularity)
     """
     if args.algo == "sac":
-        print("Importing")
         from stableBaselines.stable_baselines.sac.sac import SAC as mySAC
         from stable_baselines.sac.policies import MlpPolicy as policy
         plotter_person_reaction = utils.plotter_person_reaction
@@ -87,7 +86,6 @@ def get_agent(env, args, non_vec_env=None):
 
 
 
-        print("Makin mySac")
         return mySAC(
             policy,
             env,
