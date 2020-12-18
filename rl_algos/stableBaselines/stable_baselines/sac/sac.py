@@ -458,10 +458,9 @@ class SAC(OffPolicyRLModel):
                             "reward" : reward,
                         }
 
-                    if self.num_timesteps == 9501 and self.people_reaction_log_dir:
+                    if self.num_timesteps == 9501 and self.people_reaction_log_dir and self.plotter_person_reaction:
                         # call the plotting statement
                         self.plotter_person_reaction(person_data_dict, self.people_reaction_log_dir)
-
 
                     new_obs, reward, done, info = self.env.step(unscaled_action) #, step_num = self.num_timesteps)
                     steps_in_real_env +=1
@@ -508,11 +507,12 @@ class SAC(OffPolicyRLModel):
                     ep_done = np.array([done]).reshape((1, -1))
                     tf_util.total_episode_reward_logger(self.episode_reward, ep_reward,
                                                         ep_done, writer, self.num_timesteps)
-                    tf_util.log_histogram(writer, "action_hist", unscaled_action, self.num_timesteps, flush=False)
-                    if self.action_to_prices_fn:
-                        prices = self.action_to_prices_fn(unscaled_action)
-                        tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
-                        tf_util.log_scalar(writer, "constant_load_price", np.sum(prices), self.num_timesteps)
+                    if self.num_timesteps % 100 == 0 and not np.any(unscaled_action==np.inf):
+                        if self.action_to_prices_fn:
+                            prices = self.action_to_prices_fn(unscaled_action)
+                            tf_util.log_histogram(writer, "action_hist", unscaled_action, self.num_timesteps, flush=False)
+                            tb_log_value("constant_load_price", np.sum(prices), self.num_timesteps)
+                            tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
 
 
                 if self.num_timesteps % self.train_freq == 0:
