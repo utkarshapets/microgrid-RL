@@ -25,7 +25,8 @@ class SocialGameEnv(gym.Env):
         day_of_week = False,
         pricing_type="TOU",
         reward_function = "scaled_cost_distance",
-        fourier_basis_size=4
+        fourier_basis_size=4,
+        manual_tou_magnitude=None
         ):
         """
         SocialGameEnv for an agent determining incentives in a social game.
@@ -41,6 +42,7 @@ class SocialGameEnv(gym.Env):
                     Note: -1 = Random Day, 0 = Train over entire Yr, [1,365] = Day of the Year
             energy_in_state: (Boolean) denoting whether (or not) to include the previous day's energy consumption within the state
             yesterday_in_state: (Boolean) denoting whether (or not) to append yesterday's price signal to the state
+            manual_tou_magnitude: (Float>1) The relative magnitude of the TOU pricing to the regular pricing
 
         """
         super(SocialGameEnv, self).__init__()
@@ -65,6 +67,7 @@ class SocialGameEnv(gym.Env):
         self.yesterday_in_state = yesterday_in_state
         self.reward_function = reward_function
         self.fourier_basis_size = fourier_basis_size
+        self.manual_tou_magnitude = manual_tou_magnitude
 
         self.day = 0
         self.days_of_week = [0, 1, 2, 3, 4]
@@ -155,6 +158,9 @@ class SocialGameEnv(gym.Env):
         if self.action_space_string == "continuous":
             return spaces.Box(low=-1, high=1, shape=(self.points_length,), dtype=np.float32)
 
+        elif self.action_space_string == "continuous_normalized":
+            return spaces.Box(low=0, high=np.inf, shape=(self.points_length,), dtype=np.float32)
+
         elif self.action_space_string == "multidiscrete":
             discrete_space = [self.action_subspace] * self.points_length
             return spaces.MultiDiscrete(discrete_space)
@@ -193,7 +199,7 @@ class SocialGameEnv(gym.Env):
         my_baseline_energy = pd.DataFrame(data = {"net_energy_use" : working_hour_energy})
 
         for i in range(self.number_of_participants):
-            player = DeterministicFunctionPerson(my_baseline_energy, points_multiplier = 10, response= self.response_type_string) #, )
+            player = CurtailandShiftPerson(my_baseline_energy, points_multiplier = 10)
             player_dict['player_{}'.format(i)] = player
 
         return player_dict
@@ -211,10 +217,17 @@ class SocialGameEnv(gym.Env):
         """
         all_prices = []
         print("--" * 10)
-        print(self.one_day)
+        print("One day is: ", self.one_day)
         print("--" * 10)
 
         type_of_DR = self.pricing_type
+
+        if self.manual_tou_magnitude:
+            price = np.ones((365, 10))
+            price[:,3:6] = self.manual_tou_magnitude
+            price /= np.sum(price[0])
+            print("Using manual tou pricing", price[0])
+            return price
 
         if self.one_day != 0:
             print("Single Day")
@@ -261,6 +274,9 @@ class SocialGameEnv(gym.Env):
         elif self.action_space_string == 'continuous':
             #Continuous space is symmetric [-1,1], we map to -> [0,10] by adding 1 and multiplying by 5
             points = 5 * (action + np.ones_like(action))
+
+        elif self.action_space_string == "continuous_normalized":
+            points = 10 * (action / np.sum(action))
 
         elif self.action_space_string == "fourier":
             points = fourier_points_from_action(action, self.points_length, self.fourier_basis_size)
@@ -436,7 +452,7 @@ class SocialGameEnv(gym.Env):
         #Checking that action_space_string is valid
         assert isinstance(action_space_string, str), "action_space_str is not of type String. Instead got type {}".format(type(action_space_string))
         action_space_string = action_space_string.lower()
-        assert action_space_string in ["continuous", "multidiscrete", "fourier"], "action_space_str is not continuous or discrete. Instead got value {}".format(action_space_string)
+        assert action_space_string in ["continuous", "multidiscrete", "fourier", "continuous_normalized"], "action_space_str is not continuous or discrete. Instead got value {}".format(action_space_string)
 
         #Checking that response_type_string is valid
         assert isinstance(response_type_string, str), "Variable response_type_string should be of type String. Instead got type {}".format(type(response_type_string))

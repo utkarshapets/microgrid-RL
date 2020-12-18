@@ -1,4 +1,5 @@
 import argparse
+import numpy as np
 import gym
 from stableBaselines.stable_baselines.common.vec_env import (  # pylint: disable=import-error, no-name-in-module
     DummyVecEnv,
@@ -72,18 +73,19 @@ def get_agent(env, args, non_vec_env=None):
     Exceptions: Raises exception if args.algo unknown (not needed b/c we filter in the parser, but I added it for modularity)
     """
     if args.algo == "sac":
-        print("Importing")
         from stableBaselines.stable_baselines.sac.sac import SAC as mySAC
         from stable_baselines.sac.policies import MlpPolicy as policy
         plotter_person_reaction = utils.plotter_person_reaction
         action_to_prices_fn = lambda x: (x + 1) * 5 #normal continuous
         if args.action_space == "fourier":
             plotter_person_reaction = utils.fourier_plotter_person_reaction(10, args.fourier_basis_size)
-            # action_to_prices_fn = lambda x: env_utils.fourier_points_from_action(x, 10, args.fourier_basis_size)
+            action_to_prices_fn = lambda x: env_utils.fourier_points_from_action(x, 10, args.fourier_basis_size)
+        elif args.action_space == "c_norm":
+            action_to_prices_fn = lambda x: 10 * (x / np.sum(x)) if not np.any(x==np.inf) else np.ones(10)/10
+            plotter_person_reaction = None
 
 
 
-        print("Makin mySac")
         return mySAC(
             policy,
             env,
@@ -94,7 +96,8 @@ def get_agent(env, args, non_vec_env=None):
             tensorboard_log=args.rl_log_path,
             people_reaction_log_dir=os.path.join(args.log_path, "people_reaction/"),
             plotter_person_reaction=plotter_person_reaction,
-            action_to_prices_fn=action_to_prices_fn
+            action_to_prices_fn=action_to_prices_fn,
+            learning_rate=args.learning_rate
         )
 
     # I (Akash) still need to study PPO to understand it, I implemented b/c I know Joe's work used PPO
@@ -143,9 +146,10 @@ def get_environment(args, include_non_vec_env=False):
     if args.algo == "sac":
         if args.action_space == "fourier":
             action_space_string = "fourier"
+        elif args.action_space == "c_norm":
+            action_space_string = "continuous_normalized"
         else:
             action_space_string = "continuous"
-
     # For algos (e.g. ppo) which can handle discrete or continuous case
     # Note: PPO typically uses normalized environment (#TODO)
     else:
@@ -181,7 +185,8 @@ def get_environment(args, include_non_vec_env=False):
             energy_in_state=args.energy,
             pricing_type=args.pricing_type,
             reward_function=reward_function,
-            fourier_basis_size=args.fourier_basis_size
+            fourier_basis_size=args.fourier_basis_size,
+            manual_tou_magnitude=args.manual_tou_magnitude
         )
     else:
         # go into the planning mode
@@ -270,7 +275,7 @@ def parse_args():
         "--action_space",
         help="Action Space for Algo (only used for algos that are compatable with both discrete & cont",
         default="c",
-        choices=["c", "d", "fourier"],
+        choices=["c", "c_norm", "d", "fourier"],
     )
     parser.add_argument(
         "--fourier_basis_size",
@@ -292,6 +297,12 @@ def parse_args():
         type=int,
         default=0,
         choices=[i for i in range(-1, 366)],
+    )
+    parser.add_argument(
+        "--manual_tou_magnitude",
+        help="Relative magnitude of the TOU (should be > 1)",
+        type=float,
+        default=None
     )
     parser.add_argument(
         "--num_players",
@@ -348,6 +359,12 @@ def parse_args():
         type=str,
         default="lcr",
         choices=["scaled_cost_distance", "log_cost_regularized", "scd", "lcr"],
+    )
+    parser.add_argument(
+        "--learning_rate",
+        help="learning rate of the the agent",
+        type=float,
+        default=3e-4,
     )
     args = parser.parse_args()
 

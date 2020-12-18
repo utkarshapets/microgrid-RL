@@ -588,7 +588,7 @@ def log_matplotlib_fig(writer, tag, step, fig, dpi=80, flush=True):
 
     # Create and write Summary
     summary = tf.Summary(value=[sum_value])
-    self.writer.add_summary(summary, step)
+    writer.add_summary(summary, step)
     if flush:
         writer.flush()
 
