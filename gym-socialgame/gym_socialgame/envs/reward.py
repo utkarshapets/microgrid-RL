@@ -24,8 +24,8 @@ class Reward():
 		self.max_demand = np.max(energy_use) # max_demand
 		self.baseline_max_demand = 159.32
 
-		assert round(self.max_demand) == round(max_demand), "The max demand that the player is using and the optimization is using is not the same"
-		assert round(self.min_demand) == round(min_demand), "The min demand that the player is using and the optimization is using is not the same"
+		# assert round(self.max_demand) == round(max_demand), "The max demand that the player is using and the optimization is using is not the same"
+		# assert round(self.min_demand) == round(min_demand), "The min demand that the player is using and the optimization is using is not the same"
 
 		self.total_demand = np.sum(energy_use)
 
