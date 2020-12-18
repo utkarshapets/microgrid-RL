@@ -1,7 +1,3 @@
-python3 rl_algos/StableBaselines.py sac fourier_4_alpha_1  --action_space=fourier --fourier_basis_size=4  --num_steps=100000  --learning_rate=3e-1
-python3 rl_algos/StableBaselines.py sac standard_alpha_1 --num_steps=100000 --learning_rate=3e-1
-python3 rl_algos/StableBaselines.py sac fourier_4_alpha_2  --action_space=fourier --fourier_basis_size=4  --num_steps=100000 --learning_rate=3e-2
-python3 rl_algos/StableBaselines.py sac standard_alpha_2 --num_steps=100000 --learning_rate=3e-2
 python3 rl_algos/StableBaselines.py sac fourier_4_alpha_3  --action_space=fourier --fourier_basis_size=4  --num_steps=100000 --learning_rate=3e-3
 python3 rl_algos/StableBaselines.py sac standard_alpha_3 --num_steps=100000 --learning_rate=3e-3
 python3 rl_algos/StableBaselines.py sac fourier_4_alpha_4  --action_space=fourier --fourier_basis_size=4  --num_steps=100000 --learning_rate=3e-4
