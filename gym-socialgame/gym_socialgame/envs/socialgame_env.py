@@ -199,7 +199,7 @@ class SocialGameEnv(gym.Env):
         my_baseline_energy = pd.DataFrame(data = {"net_energy_use" : working_hour_energy})
 
         for i in range(self.number_of_participants):
-            player = CurtailandShiftPerson(my_baseline_energy, points_multiplier = 10) #, )
+            player = CurtailandShiftPerson(my_baseline_energy, points_multiplier = 10)
             player_dict['player_{}'.format(i)] = player
 
         return player_dict
