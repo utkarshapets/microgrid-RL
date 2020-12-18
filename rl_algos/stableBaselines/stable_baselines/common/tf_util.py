@@ -593,4 +593,8 @@ def log_matplotlib_fig(writer, tag, step, fig, dpi=80, flush=True):
         writer.flush()
 
 
+def log_scalar(writer, tag, value, step):
+    summary = tf.Summary(value=[tf.Summary.Value(tag=tag,
+                                                 simple_value=value)])
+    writer.add_summary(summary, step)
 
