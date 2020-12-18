@@ -109,7 +109,7 @@ def plotter_person_reaction(data_dict, log_dir):
 
 def fourier_plotter_person_reaction(points_length, fourier_basis_size):
     def new_plotter_fn(data_dict, log_dir):
-        print(data_dict)
+        # print(data_dict)
         new_ddict = {}
         for k, data in data_dict.items():
             dnew = data.copy()
@@ -117,7 +117,7 @@ def fourier_plotter_person_reaction(points_length, fourier_basis_size):
                 dnew["action"] = fourier_points_from_action(data["action"], points_length, fourier_basis_size)
             new_ddict[k] = dnew
 
-        plotter_person_reaction(new_ddict, log_dir)
+        # plotter_person_reaction(new_ddict, log_dir)
 
     return new_plotter_fn
 

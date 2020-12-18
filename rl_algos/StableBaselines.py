@@ -96,7 +96,8 @@ def get_agent(env, args, non_vec_env=None):
             tensorboard_log=args.rl_log_path,
             people_reaction_log_dir=os.path.join(args.log_path, "people_reaction/"),
             plotter_person_reaction=plotter_person_reaction,
-            action_to_prices_fn=action_to_prices_fn
+            action_to_prices_fn=action_to_prices_fn,
+            learning_rate=args.learning_rate
         )
 
     # I (Akash) still need to study PPO to understand it, I implemented b/c I know Joe's work used PPO
@@ -358,6 +359,12 @@ def parse_args():
         type=str,
         default="lcr",
         choices=["scaled_cost_distance", "log_cost_regularized", "scd", "lcr"],
+    )
+    parser.add_argument(
+        "--learning_rate",
+        help="learning rate of the the agent",
+        type=float,
+        default=3e-4,
     )
     args = parser.parse_args()
 
