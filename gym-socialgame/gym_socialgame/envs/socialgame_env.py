@@ -31,7 +31,7 @@ class SocialGameEnv(gym.Env):
         """
         SocialGameEnv for an agent determining incentives in a social game.
 
-        Note: One-step trajectory (i.e. agent submits a 10-dim vector containing incentives for each hour (8AM - 5PM) each day.
+        Note: One-step trajectory (i.e. agent submits a 24-dim vector containing incentives for each hour of each day.
             Then, environment advances one-day and agent is told that the episode has finished.)
 
         Args:

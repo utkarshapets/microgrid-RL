@@ -3,33 +3,39 @@ import cvxpy as cvx
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-#### file to calculate the rewards. Meant to be modular:
-#### class Rewards should have several different functions by Dec 2019
+#### file to calculate the rewards. Meant to be modular
 
 
 class Reward():
-	def __init__(self, energy_use, prices, min_demand, max_demand):
+	def __init__(self, net_demand, buyprice_grid, sellprice_grid):
 		"""
 		Args:
-			energy_use: list returned by Person class signifying energy use
-			prices: list returned by grid signifying cost throughout day
-			min_demand: value computed by Person class signifying minimum energy use long term
-			max_demand: value computed by Person class signifying maximum energy use long term
+			net_demand: list returned by Prosumer class signifying energy use
+			prices_grid: list returned by grid signifying cost throughout day
+			prices_transactive: list of prices set by RL agent
 		"""
 
-		self.energy_use = np.array(energy_use)
-		self.prices = np.array(prices)
-		self._num_timesteps = energy_use.shape[0]
-		self.min_demand = np.min(energy_use) # min_demand
-		self.max_demand = np.max(energy_use) # max_demand
-		self.baseline_max_demand = 159.32
+		self.net_demand = np.array(net_demand)
+		self.buyprice_grid = np.array(buyprice_grid)
+		self.sellprice_grid = np.array(sellprice_grid)
+
+		# self.prices = np.array(prices)
+		# self._num_timesteps = energy_use.shape[0]
+		# self.min_demand = np.min(energy_use) # min_demand
+		# self.max_demand = np.max(energy_use) # max_demand
+		# self.baseline_max_demand = 159.32
 
 		#assert round(self.max_demand) == round(max_demand), "The max demand that the player is using and the optimization is using is not the same"
 		#assert round(self.min_demand) == round(min_demand), "The min demand that the player is using and the optimization is using is not the same"
 
-		self.total_demand = np.sum(energy_use)
+		# self.total_demand = np.sum(net_demand)
+
+	def energy_cost_diff(self):
+		
 
 	def ideal_use_calculation(self):
+
+		# TODO: change this
 		"""
 		Computes an optimization of demand according to price
 
