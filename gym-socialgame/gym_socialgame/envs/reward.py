@@ -10,9 +10,10 @@ class Reward():
 	def __init__(self, net_demand, buyprice_grid, sellprice_grid):
 		"""
 		Args:
-			net_demand: list returned by Prosumer class signifying energy use
-			prices_grid: list returned by grid signifying cost throughout day
-			prices_transactive: list of prices set by RL agent
+			net_demand: dict of energy consumptions. Each element is a list returned by Prosumer class signifying energy use
+			buyprice_grid: list returned by grid signifying cost to buy energy throughout day (24 dim vector)
+			sellprice_grid: list returned by grid signifying rate to sell energy throughout day (24 dim vector)
+			prices_transactive: list of prices set by RL agent (24 dim vector)
 		"""
 
 		self.net_demand = np.array(net_demand)
@@ -29,9 +30,6 @@ class Reward():
 		#assert round(self.min_demand) == round(min_demand), "The min demand that the player is using and the optimization is using is not the same"
 
 		# self.total_demand = np.sum(net_demand)
-
-	def energy_cost_diff(self):
-		
 
 	def ideal_use_calculation(self):
 
