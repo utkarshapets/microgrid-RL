@@ -372,7 +372,7 @@ class SocialGameEnv(gym.Env):
         if not self.action_space.contains(action):
             action = np.asarray(action)
             if self.action_space_string == 'continuous':
-                action = np.clip(action, 0, 10)
+                action = np.clip(action, -1, 1)
 
             elif self.action_space_string == 'multidiscrete':
                 action = np.clip(action, 0, 2)
