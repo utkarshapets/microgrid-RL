@@ -82,6 +82,7 @@ class MicrogridEnv(gym.Env):
 
         self.buyprices_grid, self.sellprices_grid = self._get_prices()
         self.prices = self.buyprices_grid #Initialise to buyprices_grid
+        self.generation = self._get_generation()
 
         #Day corresponds to day # of the yr
 
@@ -98,7 +99,7 @@ class MicrogridEnv(gym.Env):
         self.prosumer_dict = self._create_agents()
 
         #TODO: Check initialization of prev_energy
-        self.prev_energy = np.zeros(10)
+        self.prev_energy = np.zeros(self.day_length)
 
         print("\n Microgrid Environment Initialized! Have Fun! \n")
 
@@ -181,6 +182,24 @@ class MicrogridEnv(gym.Env):
 
         return prosumer_dict
 
+    def _get_generation(self):
+        """
+        Purpose: Get solar energy predictions for the entire year 
+
+        Args:
+            None
+
+        Returns: Array containing solar generation predictions, where array[day_number] = renewable prediction for day_number 
+        """
+
+        yearlonggeneration = []
+
+        # Read renewable generation from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
+        generation = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['PV (W)']]
+        for day in range(1, 366):
+            yearlonggeneration.append(generation[day*self.day_length-5 : day*self.day_length+19])
+        
+        return np.array(yearlonggeneration)
 
     def _get_prices(self):
         """
@@ -344,7 +363,7 @@ class MicrogridEnv(gym.Env):
         if not self.action_space.contains(action):
             action = np.asarray(action)
             if self.action_space_string == 'continuous':
-                action = np.clip(action, 0, 10)
+                action = np.clip(action, -1, 1)
                 # TODO: ask Lucas about this
 
             elif self.action_space_string == 'multidiscrete':
@@ -362,32 +381,41 @@ class MicrogridEnv(gym.Env):
 
         price = self._price_from_action(action)
         self.prices[(self.day)] = price
-
         energy_consumptions = self._simulate_humans(price)
-
         self.prev_energy = energy_consumptions["Total"]
 
         observation = self._get_observation()
-        reward = self._get_reward(buyprice_grid, sellprice_grid, transactive_price, energy_consumptions)
-        # reward = self._get_reward(prev_price, energy_consumptions, reward_function = self.reward_function)
+        
+        buyprice_grid = self.buyprices_grid[self.day]
+        sellprice_grid = self.sellprices_grid[self.day]
+        reward = self._get_reward(buyprice_grid, sellprice_grid, price, energy_consumptions)
+
         info = {}
         return observation, reward, done, info
 
     def _get_observation(self):
-        prev_price = self.prices[ (self.day) % 365]
-        next_observation = self.prices[self.day]
+        # prev_price = self.prices[ (self.day) % 365]
+    
+        prev_energy = self.prev_energy
+        generation_tomorrow = self.generation[(self.day + 1)%365 + 1] # Indexing should start from 1
+        buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365 + 1] # Indexing should start from 1
 
-        if(self.yesterday_in_state):
-            if self.energy_in_state:
-                return np.concatenate((next_observation, np.concatenate((prev_price, self.prev_energy))))
-            else:
-                return np.concatenate((next_observation, prev_price))
+        return np.concatenate(prev_energy, np.concatenate(generation_tomorrow, buyprice_grid_tomorrow))
+        
+        
+        # next_observation = self.prices[self.day]
 
-        elif self.energy_in_state:
-            return np.concatenate((next_observation, self.prev_energy))
+        # if(self.yesterday_in_state):
+        #     if self.energy_in_state:
+        #         return np.concatenate((next_observation, np.concatenate((prev_price, self.prev_energy))))
+        #     else:
+        #         return np.concatenate((next_observation, prev_price))
 
-        else:
-            return next_observation
+        # elif self.energy_in_state:
+        #     return np.concatenate((next_observation, self.prev_energy))
+
+        # else:
+        #     return next_observation
 
     def reset(self):
         """ Resets the environment on the current day """
