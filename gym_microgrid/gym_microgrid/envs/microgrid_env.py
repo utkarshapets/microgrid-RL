@@ -358,7 +358,7 @@ class MicrogridEnv(gym.Env):
 
         price = self._price_from_action(action)
         self.prices[(self.day)] = price
-        energy_consumptions = self._simulate_humans(price)
+        energy_consumptions = self._simulate_humans(day = self.day, price = price)
         self.prev_energy = energy_consumptions["Total"]
 
         observation = self._get_observation()
@@ -377,9 +377,7 @@ class MicrogridEnv(gym.Env):
         generation_tomorrow = self.generation[(self.day + 1)%365 + 1] # Indexing should start from 1
         buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365 + 1] # Indexing should start from 1
 
-        
-
-        return np.concatenate(prev_energy, np.concatenate(generation_tomorrow, buyprice_grid_tomorrow))
+        return np.concatenate((prev_energy, np.concatenate((generation_tomorrow, buyprice_grid_tomorrow))))
         
 
     def reset(self):

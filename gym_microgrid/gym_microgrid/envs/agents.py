@@ -47,7 +47,7 @@ class Prosumer():
                         """
 
                 index = day*24-5
-                load = self.yearlongdemand[index : index + 24]
+                load = self.yearlongdemand[index : index + 24].values
                 gen = self.pv_size*self.yearlonggeneration[index : index + 24]
                 eta = self.eta
                 Ltri = np.tril(np.ones((24, 24)))
@@ -55,6 +55,14 @@ class Prosumer():
                 charge = cvx.Variable(24) # positive
                 discharge = cvx.Variable(24) # negative
         
+
+                print("Load")
+                print(load)
+                print("day")
+                print(day)
+                print("price")
+                print(price)
+
                 # obj = cvx.Minimize(price.T@(load - gen + charge/eta + discharge*eta) + self.batterycyclecost*(sum(charge)))
                 obj = cvx.Minimize(price.T@(load - gen + charge/eta + discharge*eta))
                 constraints = [Ltri@(charge + discharge) <= self.capacity*self.battery_num*np.ones(24),
