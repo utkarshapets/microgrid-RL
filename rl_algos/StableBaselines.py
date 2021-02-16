@@ -13,7 +13,7 @@ from stableBaselines.stable_baselines.common.env_checker import (  # pylint: dis
     check_env,
 )
 
-import gym_socialgame.envs.utils as env_utils
+import gym_microgrid.envs.utils as env_utils
 
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -175,8 +175,8 @@ def get_environment(args, include_non_vec_env=False):
         reward_function = args.reward_function
 
     if not planning:
-        socialgame_env = gym.make(
-            "gym_socialgame:socialgame{}".format(env_id),
+        microgrid_env = gym.make(
+            "gym_microgrid:microgrid{}".format(env_id),
             action_space_string=action_space_string,
             response_type_string=args.response,
             one_day=args.one_day,
@@ -190,8 +190,8 @@ def get_environment(args, include_non_vec_env=False):
         )
     else:
         # go into the planning mode
-        socialgame_env = gym.make(
-            "gym_socialgame:socialgame{}".format("_planning-v0"),
+        microgrid_env = gym.make(
+            "gym_microgrid:microgrid{}".format("_planning-v0"),
             action_space_string=action_space_string,
             response_type_string=args.response,
             one_day=args.one_day,
@@ -207,12 +207,12 @@ def get_environment(args, include_non_vec_env=False):
         )
 
     # Check to make sure any new changes to environment follow OpenAI Gym API
-    check_env(socialgame_env)
+    check_env(microgrid_env)
 
-    # temp_step_fnc = socialgame_env.step
+    # temp_step_fnc = microgrid_env.step
 
     # Using env_fn so we can create vectorized environment.
-    env_fn = lambda: socialgame_env
+    env_fn = lambda: microgrid_env
     venv = DummyVecEnv([env_fn])
     env = VecNormalize(venv)
 
@@ -220,7 +220,7 @@ def get_environment(args, include_non_vec_env=False):
     if not include_non_vec_env:
         return env
     else:
-        return env, socialgame_env
+        return env, microgrid_env
 
 
 def parse_args():
@@ -229,7 +229,7 @@ def parse_args():
     """
 
     parser = argparse.ArgumentParser(
-        description="Arguments for running Stable Baseline RL Algorithms on SocialGameEnv"
+        description="Arguments for running Stable Baseline RL Algorithms on microgridEnv"
     )
     parser.add_argument(
         "--env_id",
@@ -388,13 +388,13 @@ def main():
         print("Choose a new name for the experiment, log dir already exists")
         raise ValueError
 
-    env, socialgame_env = get_environment(
+    env, microgrid_env = get_environment(
         args, include_non_vec_env=True
     )
     print("Got environment, getting agent")
 
     # Create Agent
-    model = get_agent(env, args, non_vec_env=socialgame_env)
+    model = get_agent(env, args, non_vec_env=microgrid_env)
     print("Got agent")
 
     # Train algo, (logging through Tensorboard)

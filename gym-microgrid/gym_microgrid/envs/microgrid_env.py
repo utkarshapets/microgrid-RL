@@ -173,7 +173,8 @@ class MicrogridEnv(gym.Env):
         pvsizes = [100]*self.number_of_participants
 
         # Get energy from building_data.csv file, each office building has readings in kWh. Interpolate to fill missing values
-        df = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv').interpolate()
+        # df = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv').interpolate()
+        df = pd.read_csv('../building_data.csv').interpolate()
         building_names = df.columns[5:] # Skip first few columns 
         for i in range(len(building_names)):
             name = building_names[i]
@@ -195,7 +196,8 @@ class MicrogridEnv(gym.Env):
         yearlonggeneration = []
 
         # Read renewable generation from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
-        generation = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['PV (W)']]
+        # generation = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['PV (W)']]
+        generation = pd.read_csv('../building_data.csv')[['PV (W)']]
         for day in range(1, 366):
             yearlonggeneration.append(generation[day*self.day_length-5 : day*self.day_length+19])
         
@@ -220,7 +222,8 @@ class MicrogridEnv(gym.Env):
         # print("--" * 10)
 
         # Read PG&E price from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
-        price = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['Price( $ per kWh)']]
+        # price = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['Price( $ per kWh)']]
+        price = pd.read_csv('../building_data.csv')[['Price( $ per kWh)']]
         for day in range(1, 366):
             buyprice = price[day*self.day_length-5 : day*self.day_length+19]
             sellprice = 0.6*buyprice
