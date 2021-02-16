@@ -281,10 +281,11 @@ class MicrogridEnv(gym.Env):
             #Get players response to agent's actions
             prosumer = self.prosumer_dict[prosumer_name]
             prosumer_demand = prosumer.get_response(day, price)
-            
+  
             #Calculate energy consumption by prosumer and in total (entire aggregation)
             energy_consumptions[prosumer_name] = prosumer_demand
             total_consumption += prosumer_demand
+
 
         energy_consumptions["Total"] = total_consumption 
         return energy_consumptions
@@ -351,7 +352,7 @@ class MicrogridEnv(gym.Env):
 
         price = self._price_from_action(action)
         self.prices[(self.day)] = price
-        energy_consumptions = self._simulate_humans(price)
+        energy_consumptions = self._simulate_humans(day = self.day, price = price)
         self.prev_energy = energy_consumptions["Total"]
 
         observation = self._get_observation()
@@ -361,6 +362,7 @@ class MicrogridEnv(gym.Env):
         reward = self._get_reward(buyprice_grid, sellprice_grid, price, energy_consumptions)
 
         info = {}
+
         return observation, reward, done, info
 
     def _get_observation(self):
@@ -370,7 +372,8 @@ class MicrogridEnv(gym.Env):
         generation_tomorrow = self.generation[(self.day + 1)%365 + 1] # Indexing should start from 1
         buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365 + 1] # Indexing should start from 1
 
-        return np.concatenate(prev_energy, np.concatenate(generation_tomorrow, buyprice_grid_tomorrow))
+        return np.concatenate(
+            (prev_energy, generation_tomorrow, buyprice_grid_tomorrow))
         
 
     def reset(self):

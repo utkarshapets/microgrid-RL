@@ -433,34 +433,34 @@ class SAC(OffPolicyRLModel):
                 if not self.num_timesteps % (planning_steps + 1):
 
 
-                    if self.num_timesteps ==1:
-                         # form the control
-                        from sklearn.preprocessing import MinMaxScaler
-                        grid_price = self.non_vec_env.prices[self.non_vec_env.day - 1]
-                        scaler = MinMaxScaler(feature_range = (0, 10))
-                        scaled_grid_price = scaler.fit_transform(np.array(grid_price).reshape(-1, 1))
-                        scaled_grid_price = np.squeeze(scaled_grid_price)
-                        energy_consumptions = self.non_vec_env._simulate_humans(scaled_grid_price)
-                        person_data_dict["control"] = {
-                            "x" : list(range(8, 18)),
-                            "grid_price" : scaled_grid_price,
-                            "energy_consumption" : energy_consumptions["avg"],
-                            "reward" : self.non_vec_env._get_reward(price = grid_price, energy_consumptions = energy_consumptions),
-                        }
+                    # if self.num_timesteps ==1:
+                    #      # form the control
+                    #     from sklearn.preprocessing import MinMaxScaler
+                    #     grid_price = self.non_vec_env.prices[self.non_vec_env.day - 1]
+                    #     scaler = MinMaxScaler(feature_range = (0, 10))
+                    #     scaled_grid_price = scaler.fit_transform(np.array(grid_price).reshape(-1, 1))
+                    #     scaled_grid_price = np.squeeze(scaled_grid_price)
+                    #     energy_consumptions = self.non_vec_env._simulate_humans(scaled_grid_price)
+                    #     person_data_dict["control"] = {
+                    #         "x" : list(range(8, 18)),
+                    #         "grid_price" : scaled_grid_price,
+                    #         "energy_consumption" : energy_consumptions["avg"],
+                    #         "reward" : self.non_vec_env._get_reward(price = grid_price, energy_consumptions = energy_consumptions),
+                    #     }
 
-                    # form the data_dict
-                    if self.num_timesteps in [100, 1000, 9500]:
-                        person_data_dict["Step " + str(self.num_timesteps)] = {
-                            "x" : list(range(8, 18)),
-                            "grid_price" : self.non_vec_env.prices[self.non_vec_env.day - 1],
-                            "action" : unscaled_action,
-                            "energy_consumption" : self.non_vec_env.prev_energy,
-                            "reward" : reward,
-                        }
+                    # # form the data_dict
+                    # if self.num_timesteps in [100, 1000, 9500]:
+                    #     person_data_dict["Step " + str(self.num_timesteps)] = {
+                    #         "x" : list(range(8, 18)),
+                    #         "grid_price" : self.non_vec_env.prices[self.non_vec_env.day - 1],
+                    #         "action" : unscaled_action,
+                    #         "energy_consumption" : self.non_vec_env.prev_energy,
+                    #         "reward" : reward,
+                    #     }
 
-                    if self.num_timesteps == 9501 and self.people_reaction_log_dir and self.plotter_person_reaction:
-                        # call the plotting statement
-                        self.plotter_person_reaction(person_data_dict, self.people_reaction_log_dir)
+                    # if self.num_timesteps == 9501 and self.people_reaction_log_dir and self.plotter_person_reaction:
+                    #     # call the plotting statement
+                    #     self.plotter_person_reaction(person_data_dict, self.people_reaction_log_dir)
 
                     new_obs, reward, done, info = self.env.step(unscaled_action) #, step_num = self.num_timesteps)
                     steps_in_real_env +=1
@@ -514,9 +514,9 @@ class SAC(OffPolicyRLModel):
                     if self.num_timesteps % 100 == 0 and not np.any(unscaled_action==np.inf):
                         if self.action_to_prices_fn:
                             prices = self.action_to_prices_fn(unscaled_action)
-                            tf_util.log_histogram(writer, "action_vec_hist", unscaled_action, self.num_timesteps, bins=10, flush=False)
+                            # tf_util.log_histogram(writer, "action_vec_hist", unscaled_action, self.num_timesteps, bins=10, flush=False)
                             tb_log_value("constant_load_price", np.sum(prices), self.num_timesteps)
-                            tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
+                            # tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
 
 
                 if self.num_timesteps % self.train_freq == 0:
