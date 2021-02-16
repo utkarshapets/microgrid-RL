@@ -42,11 +42,11 @@ class Prosumer():
         	Assumes net metering- single day ahead price set
         		
                 Args:
-        		day: day of the year. Allowed values: [1,364]
+        		day: day of the year. Allowed values: [0,365)
         		price: 24 hour price vector, supplied as an np.array
                         """
 
-                index = day*24-5
+                index = day*24+19
                 load = self.yearlongdemand[index : index + 24]
                 gen = self.pv_size*self.yearlonggeneration[index : index + 24]
                 eta = self.eta

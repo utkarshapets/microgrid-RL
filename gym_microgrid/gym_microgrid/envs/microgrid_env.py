@@ -71,7 +71,7 @@ class MicrogridEnv(gym.Env):
         self.fourier_basis_size = fourier_basis_size
         self.manual_tou_magnitude = manual_tou_magnitude
 
-        self.day = 1
+        self.day = 0
         self.days_of_week = [0, 1, 2, 3, 4]
         self.day_of_week_flag = day_of_week
         self.day_of_week = self.days_of_week[self.day % 5]
@@ -200,9 +200,9 @@ class MicrogridEnv(gym.Env):
         # Read renewable generation from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
         # generation = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['PV (W)']]
         generation = np.squeeze(pd.read_csv('../building_data.csv')[['PV (W)']].values)
-        for day in range(1, 366):
+        for day in range(0, 365):
             yearlonggeneration.append(
-                generation[day*self.day_length-5 : day*self.day_length+19]
+                generation[day*self.day_length+19 : day*self.day_length+19+24]
             )
                
         return np.array(yearlonggeneration)
@@ -227,8 +227,8 @@ class MicrogridEnv(gym.Env):
         # price = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['Price( $ per kWh)']]
         price = np.squeeze(pd.read_csv('../building_data.csv')[['Price( $ per kWh)']].values)
 
-        for day in range(1, 366):
-            buyprice = price[day*self.day_length-5 : day*self.day_length+19]
+        for day in range(0, 365):
+            buyprice = price[day*self.day_length+19 : day*self.day_length+19+24]
             sellprice = 0.6*buyprice
             buy_prices.append(buyprice)
             sell_prices.append(sellprice)
@@ -266,7 +266,7 @@ class MicrogridEnv(gym.Env):
                  Price: transactive price set in day-ahead manner
 
         Args:
-            Day: day of the year. Values allowed [1, 365]
+            Day: day of the year. Values allowed [0, 365)
             Price: 24-dim vector corresponding to a price for each hour of the day
 
         Returns:
@@ -345,7 +345,7 @@ class MicrogridEnv(gym.Env):
 
 
         # prev_price = self.prices[(self.day)]
-        self.day = (self.day + 1) % 365 + 1
+        self.day = (self.day + 1) % 365 
         self.curr_iter += 1
 
         done = self.curr_iter > 0
@@ -369,8 +369,8 @@ class MicrogridEnv(gym.Env):
         # prev_price = self.prices[ (self.day) % 365]
     
         prev_energy = self.prev_energy
-        generation_tomorrow = self.generation[(self.day + 1)%365 + 1] # Indexing should start from 1
-        buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365 + 1] # Indexing should start from 1
+        generation_tomorrow = self.generation[(self.day + 1)%365] 
+        buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365] 
 
         return np.concatenate(
             (prev_energy, generation_tomorrow, buyprice_grid_tomorrow))
