@@ -180,7 +180,7 @@ class MicrogridEnv(gym.Env):
         building_names = df.columns[5:] # Skip first few columns 
         for i in range(len(building_names)):
             name = building_names[i]
-            prosumer = Prosumer(name, df[[name]], df[['PV (W)']], battery_num = battery_nums[i], pv_size = pvsizes[i])
+            prosumer = Prosumer(name, np.squeeze(df[[name]].values), np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
             prosumer_dict[name] = prosumer
 
         return prosumer_dict
@@ -199,15 +199,12 @@ class MicrogridEnv(gym.Env):
 
         # Read renewable generation from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
         # generation = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['PV (W)']]
-        generation = pd.read_csv('../building_data.csv')[['PV (W)']]
+        generation = np.squeeze(pd.read_csv('../building_data.csv')[['PV (W)']].values)
         for day in range(1, 366):
             yearlonggeneration.append(
-                np.squeeze(
-                    generation[day*self.day_length-5 : day*self.day_length+19]
-                    )
-                .values
-                )
-        
+                generation[day*self.day_length-5 : day*self.day_length+19]
+            )
+               
         return np.array(yearlonggeneration)
 
     def _get_prices(self):
@@ -228,11 +225,11 @@ class MicrogridEnv(gym.Env):
 
         # Read PG&E price from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
         # price = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['Price( $ per kWh)']]
-        price = pd.read_csv('../building_data.csv')[['Price( $ per kWh)']]
+        price = np.squeeze(pd.read_csv('../building_data.csv')[['Price( $ per kWh)']].values)
 
         for day in range(1, 366):
-            buyprice = np.squeeze(price[day*self.day_length-5 : day*self.day_length+19].values)
-            sellprice = np.squeeze(np.array([0.6*buyprice]))  
+            buyprice = price[day*self.day_length-5 : day*self.day_length+19]
+            sellprice = 0.6*buyprice
             buy_prices.append(buyprice)
             sell_prices.append(sellprice)
 
