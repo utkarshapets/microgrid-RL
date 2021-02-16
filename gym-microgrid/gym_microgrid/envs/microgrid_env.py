@@ -197,7 +197,7 @@ class MicrogridEnv(gym.Env):
 
         # Read renewable generation from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
         # generation = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['PV (W)']]
-        generation = pd.read_csv('../building_data.csv')[['PV (W)']]
+        generation = np.squeeze(pd.read_csv('../building_data.csv')[['PV (W)']].values)
         for day in range(1, 366):
             yearlonggeneration.append(generation[day*self.day_length-5 : day*self.day_length+19])
         
@@ -223,7 +223,7 @@ class MicrogridEnv(gym.Env):
 
         # Read PG&E price from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
         # price = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['Price( $ per kWh)']]
-        price = pd.read_csv('../building_data.csv')[['Price( $ per kWh)']]
+        price = np.squeeze(pd.read_csv('../building_data.csv')[['Price( $ per kWh)']].values)
         for day in range(1, 366):
             buyprice = price[day*self.day_length-5 : day*self.day_length+19]
             sellprice = 0.6*buyprice
