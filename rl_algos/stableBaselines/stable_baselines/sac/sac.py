@@ -486,7 +486,7 @@ class SAC(OffPolicyRLModel):
                 if not self.num_timesteps % (planning_steps + 1):
                     tb_log_value("reward_in_environment", reward_, steps_in_real_env)
 
-                tb_log_value("reward_planning", reward_, self.num_timesteps)
+                # tb_log_value("reward_planning", reward_, self.num_timesteps)
                 self.num_timesteps += 1
 
                 # Store transition in the replay buffer.
@@ -515,9 +515,8 @@ class SAC(OffPolicyRLModel):
                         if self.action_to_prices_fn:
                             prices = self.action_to_prices_fn(unscaled_action)
                             # tf_util.log_histogram(writer, "action_vec_hist", unscaled_action, self.num_timesteps, bins=10, flush=False)
-                            tb_log_value("constant_load_price", np.sum(prices), self.num_timesteps)
+                            # tb_log_value("constant_load_price", np.sum(prices), self.num_timesteps)
                             # tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
-
 
                 if self.num_timesteps % self.train_freq == 0:
                     callback.on_rollout_end()
