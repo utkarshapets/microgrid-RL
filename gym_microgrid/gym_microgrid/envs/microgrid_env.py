@@ -71,7 +71,7 @@ class MicrogridEnv(gym.Env):
         self.fourier_basis_size = fourier_basis_size
         self.manual_tou_magnitude = manual_tou_magnitude
 
-        self.day = 0
+        self.day = 1
         self.days_of_week = [0, 1, 2, 3, 4]
         self.day_of_week_flag = day_of_week
         self.day_of_week = self.days_of_week[self.day % 5]
@@ -176,7 +176,7 @@ class MicrogridEnv(gym.Env):
 
         # Get energy from building_data.csv file, each office building has readings in kWh. Interpolate to fill missing values
         # df = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv').interpolate()
-        df = pd.read_csv('../building_data.csv').interpolate()
+        df = pd.read_csv('../building_data.csv').interpolate().fillna(0)
         building_names = df.columns[5:] # Skip first few columns 
         for i in range(len(building_names)):
             name = building_names[i]
@@ -281,14 +281,11 @@ class MicrogridEnv(gym.Env):
             #Get players response to agent's actions
             prosumer = self.prosumer_dict[prosumer_name]
             prosumer_demand = prosumer.get_response(day, price)
-            # if (self.day_of_week_flag):
-            #     player_energy = player.get_response(action, day_of_week = self.day_of_week)
-            # else:
-            #     player_energy = player.get_response(action, day_of_week = None)
-
-            #Calculate energy consumption by prosumer and in total (entire aggregation)
+  
+           #Calculate energy consumption by prosumer and in total (entire aggregation)
             energy_consumptions[prosumer_name] = prosumer_demand
             total_consumption += prosumer_demand
+
 
         energy_consumptions["Total"] = total_consumption 
         return energy_consumptions
@@ -348,7 +345,7 @@ class MicrogridEnv(gym.Env):
 
 
         # prev_price = self.prices[(self.day)]
-        self.day = (self.day + 1) % 365
+        self.day = (self.day + 1) % 365 + 1
         self.curr_iter += 1
 
         done = self.curr_iter > 0
@@ -365,6 +362,7 @@ class MicrogridEnv(gym.Env):
         reward = self._get_reward(buyprice_grid, sellprice_grid, price, energy_consumptions)
 
         info = {}
+
         return observation, reward, done, info
 
     def _get_observation(self):
@@ -374,7 +372,8 @@ class MicrogridEnv(gym.Env):
         generation_tomorrow = self.generation[(self.day + 1)%365 + 1] # Indexing should start from 1
         buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365 + 1] # Indexing should start from 1
 
-        return np.concatenate((prev_energy, np.concatenate((generation_tomorrow, buyprice_grid_tomorrow))))
+        return np.concatenate(
+            (prev_energy, generation_tomorrow, buyprice_grid_tomorrow))
         
 
     def reset(self):
