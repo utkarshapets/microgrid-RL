@@ -7,13 +7,13 @@ import random
 
 import tensorflow as tf
 
-from gym_socialgame.envs.utils import price_signal, fourier_points_from_action
-from gym_socialgame.envs.agents import *
-from gym_socialgame.envs.reward import Reward
+from gym_microgrid.envs.utils import price_signal, fourier_points_from_action
+from gym_microgrid.envs.agents import *
+from gym_microgrid.envs.reward import Reward
 
 import pickle
 
-class SocialGameEnv(gym.Env):
+class MicrogridEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self,
@@ -30,7 +30,7 @@ class SocialGameEnv(gym.Env):
         manual_tou_magnitude=None
         ):
         """
-        SocialGameEnv for an agent determining incentives in a social game.
+        MicrogridEnv for an agent determining incentives in a social game.
 
         Note: One-step trajectory (i.e. agent submits a 24-dim vector containing transactive price for each hour of each day.
             Then, environment advances one-day and agent is told that the episode has finished.)
@@ -46,7 +46,7 @@ class SocialGameEnv(gym.Env):
             manual_tou_magnitude: (Float>1) The relative magnitude of the TOU pricing to the regular pricing
 
         """
-        super(SocialGameEnv, self).__init__()
+        super(MicrogridEnv, self).__init__()
 
         #Verify that inputs are valid
         self.check_valid_init_inputs(
@@ -81,6 +81,8 @@ class SocialGameEnv(gym.Env):
         self.pricing_type = "real_time_pricing" if pricing_type.upper() == "RTP" else "time_of_use"
 
         self.buyprices_grid, self.sellprices_grid = self._get_prices()
+        self.prices =  #Initialise to buyprices_grid
+        
         #Day corresponds to day # of the yr
 
         #Cur_iter counts length of trajectory for current step (i.e. cur_iter = i^th hour in a 10-hour trajectory)
@@ -98,7 +100,7 @@ class SocialGameEnv(gym.Env):
         #TODO: Check initialization of prev_energy
         self.prev_energy = np.zeros(10)
 
-        print("\n Social Game Environment Initialized! Have Fun! \n")
+        print("\n Microgrid Environment Initialized! Have Fun! \n")
 
     def _find_one_day(self, one_day: int):
         """
@@ -116,13 +118,13 @@ class SocialGameEnv(gym.Env):
         return one_day if one_day != -1 else np.random.randint(0, high=365)
 
     def _create_observation_space(self):
-        # TODO: Ask Lucas about this
-
         """
         Purpose: Returns the observation space.
-        If the state space includes yesterday, then it is +10 dim for yesterday's price signal
-        If the state space includes energy_in_state, then it is +1 dim for yesterday's energy
-
+        State space includes:
+            Previous day's net total energy consumption (24 dim)
+            Future (current) day's renewable generation prediction (24 dim)
+            Future (current) day's ToU buy prices from utility (24 dim)
+        
         Args:
             None
 
@@ -173,8 +175,6 @@ class SocialGameEnv(gym.Env):
                 low=-2, high=2, shape=(2*self.fourier_basis_size - 1,), dtype=np.float32
             )
 
-
-
     def _create_agents(self):
         """
         Purpose: Create the prosumers in the local energy market. 
@@ -187,12 +187,11 @@ class SocialGameEnv(gym.Env):
               prosumer_dict: Dictionary of prosumers
 
         """
-
         prosumer_dict = {}
 
         # Manually set battery numbers and PV sizes
-        battery_nums = [50]*10
-        pvsizes = [100]*10
+        battery_nums = [50]*self.number_of_participants
+        pvsizes = [100]*self.number_of_participants
 
         # Get energy from building_data.csv file, each office building has readings in kWh. Interpolate to fill missing values
         df = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv').interpolate()
@@ -201,22 +200,6 @@ class SocialGameEnv(gym.Env):
             name = building_names[i]
             prosumer = Prosumer(name, df[[name]], df[['PV (W)']], battery_num = battery_nums[i], pv_size = pvsizes[i])
             prosumer_dict[name] = prosumer
-
-        # Sample Energy from average energy in the office (pre-treatment) from the last experiment
-        # Reference: Lucas Spangher, et al. Engineering  vs.  ambient  typevisualizations:  Quantifying effects of different data visualizations on energy consumption. 2019
-
-        # sample_energy = np.array([ 0.28,  11.9,   16.34,  16.8,  17.43,  16.15,  16.23,  15.88,  15.09,  35.6,
-        #                         123.5,  148.7,  158.49, 149.13, 159.32, 157.62, 158.8,  156.49, 147.04,  70.76,
-        #                         42.87,  23.13,  22.52,  16.8 ])
-
-        # #only grab working hours (8am - 5pm)
-        # working_hour_energy = sample_energy[8:18]
-
-        # my_baseline_energy = pd.DataFrame(data = {"net_energy_use" : working_hour_energy})
-
-        # for i in range(self.number_of_participants):
-        #     player = CurtailandShiftPerson(my_baseline_energy, points_multiplier = 10)
-        #     prosumer_dict['player_{}'.format(i)] = player
 
         return prosumer_dict
 
@@ -242,7 +225,7 @@ class SocialGameEnv(gym.Env):
         # Read PG&E price from CSV file. Index starts at 5 am on Jan 1, make appropriate adjustments. For year 2012: it is a leap year
         price = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv')[['Price( $ per kWh)']]
         for day in range(1, 366):
-            buyprice = price[day*24-5 : day*24+19]
+            buyprice = price[day*self.day_length-5 : day*self.day_length+19]
             sellprice = 0.6*buyprice
             buy_prices.append(price)
             sell_prices.append(price)
@@ -300,7 +283,7 @@ class SocialGameEnv(gym.Env):
             # TODO: we should only use one mapping
             #Continuous space is symmetric [-1,1], we map to -> [sellprice_grid,buyprice_grid] 
             price = 
-            points = 5 * (action + np.ones_like(action))
+            # points = 5 * (action + np.ones_like(action))
 
         elif self.action_space_string == "continuous_normalized":
             points = 10 * (action / np.sum(action))
@@ -324,7 +307,7 @@ class SocialGameEnv(gym.Env):
         """
 
         energy_consumptions = {}
-        total_consumption = np.zeros(24)
+        total_consumption = np.zeros(self.day_length)
 
         for prosumer_name in self.prosumer_dict:
 
