@@ -1,5 +1,0 @@
-*.csv
-*.pickle
-*.h5
-GPyOpt_planning_model_training.h5
-GPyOpt_planning_model_training.json
