@@ -81,8 +81,8 @@ class MicrogridEnv(gym.Env):
         self.pricing_type = "real_time_pricing" if pricing_type.upper() == "RTP" else "time_of_use"
 
         self.buyprices_grid, self.sellprices_grid = self._get_prices()
-        self.prices =  #Initialise to buyprices_grid
-        
+        self.prices = self.buyprices_grid #Initialise to buyprices_grid
+
         #Day corresponds to day # of the yr
 
         #Cur_iter counts length of trajectory for current step (i.e. cur_iter = i^th hour in a 10-hour trajectory)
@@ -129,21 +129,10 @@ class MicrogridEnv(gym.Env):
             None
 
         Returns:
-            Action Space for environment based on action_space_str
+            State Space for environment based on action_space_str
         """
 
-        #TODO: Normalize obs_space !
-        if(self.yesterday_in_state):
-            if(self.energy_in_state):
-                return spaces.Box(low=-np.inf, high=np.inf, shape=(30,), dtype=np.float32)
-            else:
-                return spaces.Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32)
-
-        else:
-            if self.energy_in_state:
-                return spaces.Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32)
-            else:
-                return spaces.Box(low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32)
+        return spaces.Box(low=-np.inf, high=np.inf, shape=(72,), dtype=np.float32)
 
     def _create_action_space(self):
         """
@@ -159,21 +148,10 @@ class MicrogridEnv(gym.Env):
         We pose this option to test whether simplifying the action-space helps the agent.
         """
 
+
         #Making a symmetric, continuous space to help learning for continuous control (suggested in StableBaselines doc.)
-        if self.action_space_string == "continuous":
-            return spaces.Box(low=-1, high=1, shape=(self.day_length,), dtype=np.float32)
-
-        elif self.action_space_string == "continuous_normalized":
-            return spaces.Box(low=0, high=np.inf, shape=(self.day_length,), dtype=np.float32)
-
-        elif self.action_space_string == "multidiscrete":
-            discrete_space = [self.action_subspace] * self.day_length
-            return spaces.MultiDiscrete(discrete_space)
-
-        elif self.action_space_string == "fourier":
-            return spaces.Box(
-                low=-2, high=2, shape=(2*self.fourier_basis_size - 1,), dtype=np.float32
-            )
+        return spaces.Box(low=-1, high=1, shape=(self.day_length,), dtype=np.float32)
+        
 
     def _create_agents(self):
         """
@@ -227,8 +205,8 @@ class MicrogridEnv(gym.Env):
         for day in range(1, 366):
             buyprice = price[day*self.day_length-5 : day*self.day_length+19]
             sellprice = 0.6*buyprice
-            buy_prices.append(price)
-            sell_prices.append(price)
+            buy_prices.append(buyprice)
+            sell_prices.append(sellprice)
 
         # type_of_DR = self.pricing_type
 
@@ -276,27 +254,23 @@ class MicrogridEnv(gym.Env):
 
         Returns: Price: 24-dim vector of transactive prices
         """
-        if self.action_space_string == "multidiscrete":
-            #Mapping 0 -> 0.0, 1 -> 5.0, 2 -> 10.0
-            points = 5*action
-        elif self.action_space_string == 'continuous':
-            # TODO: we should only use one mapping
-            #Continuous space is symmetric [-1,1], we map to -> [sellprice_grid,buyprice_grid] 
-            price = 
-            # points = 5 * (action + np.ones_like(action))
-
-        elif self.action_space_string == "continuous_normalized":
-            points = 10 * (action / np.sum(action))
-
-        elif self.action_space_string == "fourier":
-            points = fourier_price_from_action(action, self.day_length, self.fourier_basis_size)
-
+        
+        # Continuous space is symmetric [-1,1], we map to -> [sellprice_grid,buyprice_grid] 
+        day = self.day
+        buyprice_grid = self.buyprices_grid[day]
+        sellprice_grid = self.sellprices_grid[day]
+        
+        # -1 -> sellprice. 1 -> buyprice
+        midpoint_price = (buyprice_grid + sellprice_grid)/2
+        diff_grid = buyprice_grid - sellprice_grid
+        scaled_diffs = np.multiply(action, diff_grid)/2 # Scale to fit difference at each hour
+        price = scaled_diffs + midpoint_price
         return price
 
     def _simulate_humans(self, day, price):
         """
         Purpose: Gets energy consumption from players given action from agent
-                 Action: transactive price set in day-ahead manner
+                 Price: transactive price set in day-ahead manner
 
         Args:
             Day: day of the year. Values allowed [1, 365]
@@ -346,32 +320,9 @@ class MicrogridEnv(gym.Env):
 
         total_reward = - abs(money_from_prosumers - money_to_utility)
         return total_reward
-        # for player_name in energy_consumptions:
-        #     if player_name != "avg":
-        #         # get the points output from players
-        #         player = self.prosumer_dict[player_name]
 
-        #         # get the reward from the player's output
-        #         player_min_demand = player.get_min_demand()
-        #         player_max_demand = player.get_max_demand()
-        #         player_energy = energy_consumptions[player_name]
-        #         player_reward = Reward(player_energy, price, player_min_demand, player_max_demand)
-
-        #         #if reward_function == "scaled_cost_distance":
-        #         #    player_ideal_demands = player_reward.ideal_use_calculation()
-        #         #    reward = player_reward.scaled_cost_distance(player_ideal_demands)
-
-        #         #elif reward_function == "log_cost_regularized":
-        #         #    reward = player_reward.log_cost_regularized()
-
-        #         reward = player_reward.log_cost_regularized()
-
-        #         total_reward += reward
-
-        # return total_reward / self.number_of_participants
 
     def step(self, action):
-        #TODO: this
         """
         Purpose: Takes a step in the environment
 
@@ -403,27 +354,27 @@ class MicrogridEnv(gym.Env):
                 assert False, "Fourier basis mode, got incorrect action. This should never happen. action: {}".format(action)
 
 
-        prev_price = self.prices[(self.day)]
+        # prev_price = self.prices[(self.day)]
         self.day = (self.day + 1) % 365
         self.curr_iter += 1
 
         done = self.curr_iter > 0
 
         price = self._price_from_action(action)
+        self.prices[(self.day)] = price
 
         energy_consumptions = self._simulate_humans(price)
 
-        # HACK ALERT. USING AVG ENERGY CONSUMPTION FOR STATE SPACE. this will not work if people are not all the same
-
-        self.prev_energy = energy_consumptions["avg"]
+        self.prev_energy = energy_consumptions["Total"]
 
         observation = self._get_observation()
-        reward = self._get_reward(prev_price, energy_consumptions, reward_function = self.reward_function)
+        reward = self._get_reward(buyprice_grid, sellprice_grid, transactive_price, energy_consumptions)
+        # reward = self._get_reward(prev_price, energy_consumptions, reward_function = self.reward_function)
         info = {}
         return observation, reward, done, info
 
     def _get_observation(self):
-        prev_price = self.prices[ (self.day - 1) % 365]
+        prev_price = self.prices[ (self.day) % 365]
         next_observation = self.prices[self.day]
 
         if(self.yesterday_in_state):
