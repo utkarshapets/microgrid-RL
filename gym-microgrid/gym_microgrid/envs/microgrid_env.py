@@ -178,7 +178,7 @@ class MicrogridEnv(gym.Env):
         building_names = df.columns[5:] # Skip first few columns 
         for i in range(len(building_names)):
             name = building_names[i]
-            prosumer = Prosumer(name, df[[name]], df[['PV (W)']], battery_num = battery_nums[i], pv_size = pvsizes[i])
+            prosumer = Prosumer(name, np.squeeze(df[[name]].values), np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
             prosumer_dict[name] = prosumer
 
         return prosumer_dict
