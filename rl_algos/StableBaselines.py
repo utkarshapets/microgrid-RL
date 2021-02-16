@@ -13,7 +13,12 @@ from stableBaselines.stable_baselines.common.env_checker import (  # pylint: dis
     check_env,
 )
 
-import gym_microgrid.envs.utils as env_utils
+import sys
+sys.path.insert(0, '..')
+
+# import gym_microgrid.gym_microgrid.envs.utils as env_utils
+
+import utils as env_utils
 
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -77,14 +82,6 @@ def get_agent(env, args, non_vec_env=None):
         from stable_baselines.sac.policies import MlpPolicy as policy
         plotter_person_reaction = utils.plotter_person_reaction
         action_to_prices_fn = lambda x: (x + 1) * 5 #normal continuous
-        if args.action_space == "fourier":
-            plotter_person_reaction = utils.fourier_plotter_person_reaction(10, args.fourier_basis_size)
-            action_to_prices_fn = lambda x: env_utils.fourier_points_from_action(x, 10, args.fourier_basis_size)
-        elif args.action_space == "c_norm":
-            action_to_prices_fn = lambda x: 10 * (x / np.sum(x)) if not np.any(x==np.inf) else np.ones(10)/10
-            plotter_person_reaction = None
-
-
 
         return mySAC(
             policy,
@@ -99,18 +96,6 @@ def get_agent(env, args, non_vec_env=None):
             action_to_prices_fn=action_to_prices_fn,
             learning_rate=args.learning_rate
         )
-
-    # I (Akash) still need to study PPO to understand it, I implemented b/c I know Joe's work used PPO
-    elif args.algo == "ppo":
-        from stable_baselines import PPO2
-
-        if args.policy_type == "mlp":
-            from stable_baselines.common.policies import MlpPolicy as policy
-
-        elif args.policy_type == "lstm":
-            from stable_baselines.common.policies import MlpLstmPolicy as policy
-
-        return PPO2(policy, env, verbose=0, tensorboard_log=args.rl_log_path)
 
     else:
         raise NotImplementedError("Algorithm {} not supported. :( ".format(args.algo))
@@ -143,13 +128,8 @@ def get_environment(args, include_non_vec_env=False):
     planning = (args.planning_steps > 0) or args.test_planning_env
 
     # SAC only works in continuous environment
-    if args.algo == "sac":
-        if args.action_space == "fourier":
-            action_space_string = "fourier"
-        elif args.action_space == "c_norm":
-            action_space_string = "continuous_normalized"
-        else:
-            action_space_string = "continuous"
+    if args.algo == "sac":        
+        action_space_string = "continuous"
     # For algos (e.g. ppo) which can handle discrete or continuous case
     # Note: PPO typically uses normalized environment (#TODO)
     else:
@@ -242,7 +222,7 @@ def parse_args():
         "algo", help="Stable Baselines Algorithm", type=str, choices=["sac", "ppo"]
     )
     parser.add_argument(
-        "exp_name", help="Name of the experiment. Used to name log files, etc.", type=str
+        "--exp_name", help="Name of the experiment. Used to name log files, etc.", type=str
     )
     parser.add_argument(
         "--base_log_dir",
