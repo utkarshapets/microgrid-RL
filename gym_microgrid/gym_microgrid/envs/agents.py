@@ -65,10 +65,20 @@ class Prosumer():
                         discharge >= -self.c_rate*self.capacity*self.battery_num*np.ones(24),
                         discharge <= np.zeros(24)]
                 prob = cvx.Problem(obj, constraints)
-        
 
-
-        
+                try:
+                        prob.solve(solver = cvx.ECOS)
+                except SolverError: 
+                        try:
+                                prob.solve(solver = cvx.SCS)
+                        except SolverError:
+                                try:
+                                        prob.solve(solver = cvx.ECOS_BB)
+                                except SolverError:
+                                        try:
+                                                prob.solve(solver = cvs.OSQP)
+                                                except SolverError
+                                                  
                 charged = prob.variables()[0].value
                 discharged = prob.variables()[1].value
                 net = load - gen + charged/eta + discharged*eta
