@@ -380,11 +380,14 @@ class MicrogridEnv(gym.Env):
         return observation, reward, done, info
 
     def _get_observation(self):
-        # prev_price = self.prices[ (self.day) % 365]
     
         prev_energy = self.prev_energy
         generation_tomorrow = self.generation[(self.day + 1)%365] 
         buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365] 
+
+        # Adding in mean zero Gaussian noise
+        generation_tomorrow_nonzero = (generation_tomorrow > 1) # when is generation non zero?
+        generation_tomorrow += generation_tomorrow_nonzero* np.random.normal(loc = 0, scale = 10, size = 24) # Add in Gaussian noise when gen in non zero
 
         return np.concatenate(
             (prev_energy, generation_tomorrow, buyprice_grid_tomorrow))
