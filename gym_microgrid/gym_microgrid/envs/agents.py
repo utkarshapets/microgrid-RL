@@ -56,7 +56,6 @@ class Prosumer():
                 charge = cvx.Variable(24) # positive
                 discharge = cvx.Variable(24) # negative
         
-
                 # obj = cvx.Minimize(price.T@(load - gen + charge/eta + discharge*eta) + self.batterycyclecost*(sum(charge)))
                 obj = cvx.Minimize(price.T@(load - gen + charge/eta + discharge*eta))
                 constraints = [Ltri@(charge + discharge) <= self.capacity*self.battery_num*np.ones(24),
@@ -71,12 +70,15 @@ class Prosumer():
                         prob.solve(solver = cvx.ECOS)
                 except SolverError: 
                         try:
+                                print("ECOS solver did not work")
                                 prob.solve(solver = cvx.SCS)
                         except SolverError:
                                 try:
+                                        print("SCS or ECOS didn't work")
                                         prob.solve(solver = cvx.ECOS_BB)
                                 except SolverError:
                                         try:
+                                                print("Three didn't work")
                                                 prob.solve(solver = cvs.OSQP)
                                         except SolverError:
                                                 print("none of the solvers work")
