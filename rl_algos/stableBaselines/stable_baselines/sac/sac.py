@@ -2,6 +2,7 @@ import time
 import warnings
 
 import numpy as np
+import pandas as pd 
 import tensorflow as tf
 
 from stable_baselines.common import tf_util, OffPolicyRLModel, SetVerbosity, TensorboardWriter
@@ -373,6 +374,20 @@ class SAC(OffPolicyRLModel):
         # TODO: use builtin log writer instead of this old lib
         tb_configure(self.tensorboard_log)
 
+        action_log_csv = self.tensorboard_log + "_actions.csv"
+
+        
+        action_log_df = pd.DataFrame(
+            columns = np.concatenate(
+            (
+                ["iteration"], 
+                ["h" + str(i) for i in range(24)]
+                )
+            )
+        )
+
+        action_log_index = 0
+
         steps_in_real_env = 0
         person_data_dict = {}
 
@@ -433,6 +448,8 @@ class SAC(OffPolicyRLModel):
                 if not self.num_timesteps % (planning_steps + 1):
 
 
+                    ## TODO: work on this? 
+
                     # if self.num_timesteps ==1:
                     #      # form the control
                     #     from sklearn.preprocessing import MinMaxScaler
@@ -468,6 +485,13 @@ class SAC(OffPolicyRLModel):
                 else:
                     print("planning step")
                     new_obs, reward, done, info = self.non_vec_env.planning_step(unscaled_action)
+
+
+                # write the action to a csv 
+                if not self.num_timesteps % 100:
+                    action_log_df.loc[action_log_index] = np.concatenate(([self.num_timesteps], unscaled_action))
+                    action_log_index += 1
+                    action_log_df.to_csv(action_log_csv)
 
                 # Only stop training if return value is False, not when it is None. This is for backwards
                 # compatibility with callbacks that have no return statement.

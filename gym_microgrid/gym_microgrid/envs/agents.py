@@ -66,7 +66,8 @@ class Prosumer():
                         discharge <= np.zeros(24)]
                 prob = cvx.Problem(obj, constraints)
         
-                prob.solve(solver = cvx.ECOS)
+
+
         
                 charged = prob.variables()[0].value
                 discharged = prob.variables()[1].value
