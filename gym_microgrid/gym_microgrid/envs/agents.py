@@ -70,10 +70,53 @@ class Prosumer():
                         prob.solve(solver = cvx.ECOS)
                 except SolverError: 
                         prob.solve(solver = cvx.SCS)
-                        
+
                 charged = prob.variables()[0].value
                 discharged = prob.variables()[1].value
                 net = load - gen + charged/eta + discharged*eta
 
                 return np.array(net)
 
+        def get_battery_operation(
+                self, 
+                day, 
+                price,
+                ):
+
+                """
+                Determines the net charge/discharge of the prosumer on a specific day, in response to energy prices
+        	Assumes net metering- single day ahead price set
+        		
+                Args:
+        		day: day of the year. Allowed values: [0,365)
+        		price: 24 hour price vector, supplied as an np.array
+                        """
+
+                index = day*24+19
+                load = self.yearlongdemand[index : index + 24]
+                gen = self.pv_size*self.yearlonggeneration[index : index + 24]
+                eta = self.eta
+                Ltri = np.tril(np.ones((24, 24)))
+
+                charge = cvx.Variable(24) # positive
+                discharge = cvx.Variable(24) # negative
+        
+                # obj = cvx.Minimize(price.T@(load - gen + charge/eta + discharge*eta) + self.batterycyclecost*(sum(charge)))
+                obj = cvx.Minimize(price.T@(load - gen + charge/eta + discharge*eta))
+                constraints = [Ltri@(charge + discharge) <= self.capacity*self.battery_num*np.ones(24),
+                        Ltri@(charge + discharge) >= np.zeros(24),
+                        charge >= np.zeros(24),
+                        charge <= self.c_rate*self.capacity*self.battery_num*np.ones(24),
+                        discharge >= -self.c_rate*self.capacity*self.battery_num*np.ones(24),
+                        discharge <= np.zeros(24)]
+                prob = cvx.Problem(obj, constraints)
+        
+                try:
+                        prob.solve(solver = cvx.ECOS)
+                except SolverError: 
+                        prob.solve(solver = cvx.SCS)
+                        
+                charged = prob.variables()[0].value
+                discharged = prob.variables()[1].value
+                return np.array(charged/eta + discharged*eta)
+                
