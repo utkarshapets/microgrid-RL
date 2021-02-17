@@ -124,7 +124,16 @@ class Prosumer():
                 try:
                         prob.solve(solver = cvx.ECOS)
                 except SolverError: 
-                        prob.solve(solver = cvx.SCS)
+                        try:
+                                prob.solve(solver = cvx.SCS)
+                        except SolverError:
+                                try:
+                                        prob.solve(solver = cvx.ECOS_BB)
+                                except SolverError:
+                                        try:
+                                                prob.solve(solver = cvs.OSQP)
+                                        except SolverError:
+                                                print("none of the solvers work")
                         
                 charged = prob.variables()[0].value
                 discharged = prob.variables()[1].value
