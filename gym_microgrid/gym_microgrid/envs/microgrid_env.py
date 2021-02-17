@@ -28,7 +28,7 @@ class MicrogridEnv(gym.Env):
         pricing_type="TOU",
         reward_function = "scaled_cost_distance",
         fourier_basis_size=4,
-        manual_tou_magnitude=None
+        manual_tou_magnitude=None,
         ):
         """
         MicrogridEnv for an agent determining incentives in a social game.
@@ -308,7 +308,13 @@ class MicrogridEnv(gym.Env):
         money_to_utility = np.dot(np.maximum(0, total_consumption), buyprice_grid) + np.dot(np.minimum(0, total_consumption), sellprice_grid)
         money_from_prosumers = np.dot(total_consumption, transactive_price)
 
-        total_reward = - abs(money_from_prosumers - money_to_utility)
+        total_reward = - np.log(
+            abs(
+                money_from_prosumers - money_to_utility
+                )
+            )
+
+
         return total_reward
 
 
@@ -351,6 +357,10 @@ class MicrogridEnv(gym.Env):
         done = self.curr_iter > 0
 
         price = self._price_from_action(action)
+
+        ## TODO: store step_num, day, and price every 100 days 
+
+
         self.prices[(self.day)] = price
         energy_consumptions = self._simulate_humans(day = self.day, price = price)
         self.prev_energy = energy_consumptions["Total"]

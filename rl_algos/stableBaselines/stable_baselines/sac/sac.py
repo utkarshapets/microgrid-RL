@@ -2,6 +2,7 @@ import time
 import warnings
 
 import numpy as np
+import pandas as pd 
 import tensorflow as tf
 
 from stable_baselines.common import tf_util, OffPolicyRLModel, SetVerbosity, TensorboardWriter
@@ -373,6 +374,20 @@ class SAC(OffPolicyRLModel):
         # TODO: use builtin log writer instead of this old lib
         tb_configure(self.tensorboard_log)
 
+        action_log_csv = self.tensorboard_log + "_actions.csv"
+
+        
+        action_log_df = pd.DataFrame(
+            columns = np.concatenate(
+            (
+                ["iteration"], 
+                ["h" + str(i) for i in range(24)]
+                )
+            )
+        )
+
+        action_log_index = 0
+
         steps_in_real_env = 0
         person_data_dict = {}
 
@@ -433,6 +448,8 @@ class SAC(OffPolicyRLModel):
                 if not self.num_timesteps % (planning_steps + 1):
 
 
+                    ## TODO: work on this? 
+
                     # if self.num_timesteps ==1:
                     #      # form the control
                     #     from sklearn.preprocessing import MinMaxScaler
@@ -469,6 +486,13 @@ class SAC(OffPolicyRLModel):
                     print("planning step")
                     new_obs, reward, done, info = self.non_vec_env.planning_step(unscaled_action)
 
+
+                # write the action to a csv 
+                if not self.num_timesteps % 100:
+                    action_log_df.loc[action_log_index] = np.concatenate(([self.num_timesteps], unscaled_action))
+                    action_log_index += 1
+                    action_log_df.to_csv(action_log_csv)
+
                 # Only stop training if return value is False, not when it is None. This is for backwards
                 # compatibility with callbacks that have no return statement.
                 callback.update_locals(locals())
@@ -486,7 +510,7 @@ class SAC(OffPolicyRLModel):
                 if not self.num_timesteps % (planning_steps + 1):
                     tb_log_value("reward_in_environment", reward_, steps_in_real_env)
 
-                tb_log_value("reward_planning", reward_, self.num_timesteps)
+                # tb_log_value("reward_planning", reward_, self.num_timesteps)
                 self.num_timesteps += 1
 
                 # Store transition in the replay buffer.
@@ -515,9 +539,8 @@ class SAC(OffPolicyRLModel):
                         if self.action_to_prices_fn:
                             prices = self.action_to_prices_fn(unscaled_action)
                             # tf_util.log_histogram(writer, "action_vec_hist", unscaled_action, self.num_timesteps, bins=10, flush=False)
-                            tb_log_value("constant_load_price", np.sum(prices), self.num_timesteps)
+                            # tb_log_value("constant_load_price", np.sum(prices), self.num_timesteps)
                             # tf_util.log_vec_as_histogram(writer, "prices", prices, self.num_timesteps, flush=True)
-
 
                 if self.num_timesteps % self.train_freq == 0:
                     callback.on_rollout_end()
