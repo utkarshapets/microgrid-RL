@@ -66,8 +66,11 @@ class Prosumer():
                         discharge <= np.zeros(24)]
                 prob = cvx.Problem(obj, constraints)
         
-                prob.solve(solver = cvx.ECOS)
-        
+                try:
+                        prob.solve(solver = cvx.ECOS)
+                except SolverError: 
+                        prob.solve(solver = cvx.SCS)
+                        
                 charged = prob.variables()[0].value
                 discharged = prob.variables()[1].value
                 net = load - gen + charged/eta + discharged*eta
