@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import cvxpy as cvx
 from sklearn.preprocessing import MinMaxScaler
+from cvxpy.error import SolverError
 
 #### file to make the simulation of prosumers that we can work with 
 
@@ -77,8 +78,9 @@ class Prosumer():
                                 except SolverError:
                                         try:
                                                 prob.solve(solver = cvs.OSQP)
-                                                except SolverError
-                                                  
+                                        except SolverError:
+                                                print("none of the solvers work")
+
                 charged = prob.variables()[0].value
                 discharged = prob.variables()[1].value
                 net = load - gen + charged/eta + discharged*eta
