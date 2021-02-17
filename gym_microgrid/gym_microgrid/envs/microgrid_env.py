@@ -14,6 +14,11 @@ from gym_microgrid.envs.reward import Reward
 import pickle
 import IPython
 
+
+## TODO: print plotter reactions
+##       try where profit is maximized
+##       inefficiencies in the grid 
+
 class MicrogridEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -308,11 +313,10 @@ class MicrogridEnv(gym.Env):
         money_to_utility = np.dot(np.maximum(0, total_consumption), buyprice_grid) + np.dot(np.minimum(0, total_consumption), sellprice_grid)
         money_from_prosumers = np.dot(total_consumption, transactive_price)
 
-        total_reward = - np.log(
-            abs(
-                money_from_prosumers - money_to_utility
-                )
-            )
+        total_reward = - abs(
+                    money_from_prosumers - money_to_utility
+                    )
+                
 
 
         return total_reward
