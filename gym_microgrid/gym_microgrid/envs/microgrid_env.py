@@ -425,7 +425,6 @@ class MicrogridEnv(gym.Env):
 
         # data frame logger. Delete soon 
 
-        if not self.iteration % 20: 
         if ((not self.num_timesteps % 10) & (self.num_timesteps > 10000)) or self.num_timesteps>19500:
 
             self.logger_df.loc[self.iteration] = np.concatenate(
