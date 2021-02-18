@@ -438,7 +438,7 @@ class MicrogridEnv(gym.Env):
 
         self.iteration += 1
 
-        self.logger_df.to_csv("logs/" + "logger_every_20_timestep.csv")
+        # self.logger_df.to_csv("logs/" + "logger_every_20_timestep.csv")
 
         return observation, reward, done, info
 
