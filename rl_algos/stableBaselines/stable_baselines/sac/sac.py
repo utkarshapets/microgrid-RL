@@ -491,7 +491,7 @@ class SAC(OffPolicyRLModel):
 
 
                 # write the action to a csv 
-                if (not self.num_timesteps % 10 and (self.num_timesteps > 10000)) or self.num_timesteps>20000:
+                if ((not self.num_timesteps % 10) & (self.num_timesteps > 10000)) or self.num_timesteps>19500:
                     
                     ### get the battery charging
                     battery_op = {}
