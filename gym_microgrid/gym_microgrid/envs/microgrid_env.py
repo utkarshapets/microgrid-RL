@@ -448,7 +448,7 @@ class MicrogridEnv(gym.Env):
         generation_tomorrow = self.generation[(self.day + 1)%365] 
         buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365] 
 
-        # noise = np.random.normal(loc = 0, scale = 50, size = 24) ## TODO: get rid of this if not doing well
+        noise = np.random.normal(loc = 0, scale = 50, size = 24) ## TODO: get rid of this if not doing well
         generation_tomorrow_nonzero = (generation_tomorrow > abs(noise)) # when is generation non zero?
         generation_tomorrow += generation_tomorrow_nonzero* noise # Add in Gaussian noise when gen in non zero
 
