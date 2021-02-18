@@ -343,6 +343,7 @@ def parse_args():
         "--pb_scenarios",
         type=int,
         default = 1,
+        help="1 is for repeated PV, 2 for small, 3 or medium scenario",
         choices=[1,2,3])
     args = parser.parse_args()
 
