@@ -44,7 +44,7 @@ class MicrogridEnv(gym.Env):
         fourier_basis_size=4,
         manual_tou_magnitude=None,
         complex_batt_pv_scenario=1,
-
+        exp_name = None,
         ):
         """
         MicrogridEnv for an agent determining incentives in a social game.
@@ -87,6 +87,7 @@ class MicrogridEnv(gym.Env):
         self.fourier_basis_size = fourier_basis_size
         self.manual_tou_magnitude = manual_tou_magnitude
         self.complex_batt_pv_scenario = complex_batt_pv_scenario
+        self.exp_name=exp_name
 
         self.day = 0
         self.days_of_week = [0, 1, 2, 3, 4]
@@ -360,7 +361,7 @@ class MicrogridEnv(gym.Env):
                 )
 
         elif self.reward_function =="profit_maximizing":
-            total_reward = - abs(
+            total_reward = (
                     money_from_prosumers - money_to_utility
                 )
 
@@ -424,21 +425,21 @@ class MicrogridEnv(gym.Env):
 
         # data frame logger. Delete soon 
 
-        # if not self.iteration % 20: 
+        if not self.iteration % 20: 
+        if ((not self.num_timesteps % 10) & (self.num_timesteps > 10000)) or self.num_timesteps>19500:
 
-            # self.logger_df.loc[self.iteration] = np.concatenate(
-            #     (   
-            #         [self.iteration],
-            #         [reward],
-            #         price,
-            #         buyprice_grid,
-            #         sellprice_grid,
-            #         self.prev_energy,
-            #         ))
-
+            self.logger_df.loc[self.iteration] = np.concatenate(
+                (   
+                    [self.iteration],
+                    [reward],
+                    price,
+                    buyprice_grid,
+                    sellprice_grid,
+                    self.prev_energy,
+                    ))
+            self.logger_df.to_csv("logs/" + str(self.exp_name) + "/" +str(exp_name) + ".csv")
+        
         self.iteration += 1
-
-        # self.logger_df.to_csv("logs/" + "logger_every_20_timestep.csv")
 
         return observation, reward, done, info
 

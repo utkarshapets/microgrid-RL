@@ -160,6 +160,7 @@ def get_environment(args, include_non_vec_env=False):
             fourier_basis_size=args.fourier_basis_size,
             manual_tou_magnitude=args.manual_tou_magnitude,
             complex_batt_pv_scenario = args.pb_scenario,
+            exp_name = args.exp_name,
         )
     else:
         # go into the planning mode

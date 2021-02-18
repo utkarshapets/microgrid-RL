@@ -492,33 +492,33 @@ class SAC(OffPolicyRLModel):
 
                 # write the action to a csv
                 
-                if ((not self.num_timesteps % 10) & (self.num_timesteps > 10000)) or self.num_timesteps>19500:                    
+                # if ((not self.num_timesteps % 10) & (self.num_timesteps > 10000)) or self.num_timesteps>19500:                    
 
-                    ### get the battery charging
-                    battery_op = {}
-                    total_battery_consumption = np.zeros(24)
-                    total_energy_consumption = np.zeros(24)
+                #     ### get the battery charging
+                #     battery_op = {}
+                #     total_battery_consumption = np.zeros(24)
+                #     total_energy_consumption = np.zeros(24)
 
-                    for prosumer_name in self.non_vec_env.prosumer_dict:
-                        #Get players response to agent's actions
-                        day = self.non_vec_env.day
-                        price = self.non_vec_env.price                    
-                        prosumer = self.non_vec_env.prosumer_dict[prosumer_name]
-                        prosumer_battery = prosumer.get_battery_operation(day, price)
-                        prosumer_demand = prosumer.get_response(day, price)
+                #     for prosumer_name in self.non_vec_env.prosumer_dict:
+                #         #Get players response to agent's actions
+                #         day = self.non_vec_env.day
+                #         price = self.non_vec_env.price                    
+                #         prosumer = self.non_vec_env.prosumer_dict[prosumer_name]
+                #         prosumer_battery = prosumer.get_battery_operation(day, price)
+                #         prosumer_demand = prosumer.get_response(day, price)
 
-                        total_battery_consumption += prosumer_battery
-                        total_energy_consumption += prosumer_demand
+                #         total_battery_consumption += prosumer_battery
+                #         total_energy_consumption += prosumer_demand
 
 
-                    action_log_df.loc[action_log_index] = np.concatenate(
-                        ([self.num_timesteps], 
-                            price,
-                            total_battery_consumption,
-                            total_energy_consumption,))
-                    action_log_index += 1
-                    action_log_df.to_csv(action_log_csv)
-                    print("Iteration: " + str(self.num_timesteps))
+                #     action_log_df.loc[action_log_index] = np.concatenate(
+                #         ([self.num_timesteps], 
+                #             price,
+                #             total_battery_consumption,
+                #             total_energy_consumption,))
+                #     action_log_index += 1
+                #     action_log_df.to_csv(action_log_csv)
+                #     print("Iteration: " + str(self.num_timesteps))
 
 
 
