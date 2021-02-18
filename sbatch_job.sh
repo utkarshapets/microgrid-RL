@@ -18,7 +18,7 @@
 #SBATCH --gres=gpu:0
 #
 #Request CPU
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
 #
 # Wall clock limit:
 #SBATCH --time=30:00:00
@@ -29,16 +29,16 @@
 module load python/3.6
 source /global/home/users/lucas_spangher/transactive_control/auto_keras_env/bin/activate
 ## market_solving
-python StableBaselines.py sac --exp_name=2021_02_17_ms_large_a --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_17_ms_medium_a --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_17_ms_small_a --reward_function="market_solving" --pb_scenario=3 &
-python StableBaselines.py sac --exp_name=2021_02_17_ms_large_b --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_17_ms_medium_b --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_17_ms_small_b --reward_function="market_solving" --pb_scenario=3 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_large_a --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_medium_a --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_small_a --reward_function="market_solving" --pb_scenario=3 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_large_b --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_medium_b --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_small_b --reward_function="market_solving" --pb_scenario=3 &
 ## profit maximizing
-python StableBaselines.py sac --exp_name=2021_02_17_pm_large_a --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_17_pm_medium_a --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_17_pm_small_a --reward_function="market_solving" --pb_scenario=3 &
-python StableBaselines.py sac --exp_name=2021_02_17_pm_large_b --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_17_pm_medium_b --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_17_pm_small_b --reward_function="market_solving" --pb_scenario=3
+python StableBaselines.py sac --exp_name=2021_02_18_pm_large_a --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_a --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_small_a --reward_function="market_solving" --pb_scenario=3 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_large_b --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_b --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_small_b --reward_function="market_solving" --pb_scenario=3
