@@ -111,9 +111,6 @@ def args_convert_bool(args):
         args.energy = utils.string2bool(args.energy)
     if not isinstance(args.test_planning_env, (bool)):
         args.test_planning_env = utils.string2bool(args.test_planning_env)
-    if not isinstance(args.complex_bp, (bool)):
-        args.complex_bp = utils.string2bool(args.complex_bp)
-
 
 def get_environment(args, include_non_vec_env=False):
     """
@@ -345,8 +342,8 @@ def parse_args():
     parser.add_argument(
         "--pb_scenarios",
         type=int,
-        default = "T",
-        choices=["T", "F"])
+        default = 1,
+        choices=[1,2,3])
     args = parser.parse_args()
 
     args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")
