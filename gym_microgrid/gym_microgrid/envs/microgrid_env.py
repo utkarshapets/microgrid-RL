@@ -24,7 +24,7 @@ import IPython
 ##       change reward to be profit maximizing
 ##       
 
-
+##
 ## prepare to run on savio? 
 ## 
 
