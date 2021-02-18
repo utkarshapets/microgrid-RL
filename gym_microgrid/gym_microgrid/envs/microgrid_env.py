@@ -436,7 +436,7 @@ class MicrogridEnv(gym.Env):
                     sellprice_grid,
                     self.prev_energy,
                     ))
-            self.logger_df.to_csv("logs/" + str(self.exp_name) + "/" +str(exp_name) + ".csv")
+            self.logger_df.to_csv("logs/" + str(self.exp_name) + "/" +str(self.exp_name) + ".csv")
         
         self.iteration += 1
 
