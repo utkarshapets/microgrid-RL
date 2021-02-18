@@ -159,7 +159,7 @@ def get_environment(args, include_non_vec_env=False):
             reward_function=args.reward_function,
             fourier_basis_size=args.fourier_basis_size,
             manual_tou_magnitude=args.manual_tou_magnitude,
-            complex_batt_pv_scenario = args.complex_bp,
+            complex_batt_pv_scenario = args.pb_scenario,
         )
     else:
         # go into the planning mode
@@ -340,7 +340,7 @@ def parse_args():
         default=3e-4,
     )
     parser.add_argument(
-        "--pb_scenarios",
+        "--pb_scenario",
         type=int,
         default = 1,
         help="1 is for repeated PV, 2 for small, 3 or medium scenario",
