@@ -490,9 +490,9 @@ class SAC(OffPolicyRLModel):
                     new_obs, reward, done, info = self.non_vec_env.planning_step(unscaled_action)
 
 
-                # write the action to a csv 
-                if not (self.num_timesteps % 10 and (self.num_timesteps < 10000)) or self.num_timesteps > 20000):
-                    
+                # write the action to a csv
+                
+                if ((not self.num_timesteps % 10) & (self.num_timesteps > 10000)) or self.num_timesteps>19500:                    
                     ### get the battery charging
                     battery_op = {}
                     total_battery_consumption = np.zeros(24)
