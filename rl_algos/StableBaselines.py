@@ -111,6 +111,8 @@ def args_convert_bool(args):
         args.energy = utils.string2bool(args.energy)
     if not isinstance(args.test_planning_env, (bool)):
         args.test_planning_env = utils.string2bool(args.test_planning_env)
+    if not isinstance(args.complex_bp, (bool)):
+        args.complex_bp = utils.string2bool(args.complex_bp)
 
 
 def get_environment(args, include_non_vec_env=False):
@@ -147,13 +149,6 @@ def get_environment(args, include_non_vec_env=False):
     else:
         env_id = "-v0"
 
-    if args.reward_function == "lcr":
-        reward_function = "log_cost_regularized"
-    elif args.reward_function == "scd":
-        reward_function = "scaled_cost_distance"
-    else:
-        reward_function = args.reward_function
-
     if not planning:
         microgrid_env = gym.make(
             "gym_microgrid:microgrid{}".format(env_id),
@@ -164,9 +159,10 @@ def get_environment(args, include_non_vec_env=False):
             yesterday_in_state=args.yesterday,
             energy_in_state=args.energy,
             pricing_type=args.pricing_type,
-            reward_function=reward_function,
+            reward_function=args.reward_function,
             fourier_basis_size=args.fourier_basis_size,
-            manual_tou_magnitude=args.manual_tou_magnitude
+            manual_tou_magnitude=args.manual_tou_magnitude,
+            complex_batt_pv_scenario = args.complex_bp,
         )
     else:
         # go into the planning mode
@@ -242,7 +238,7 @@ def parse_args():
         "--num_steps",
         help="Number of timesteps to train algo",
         type=int,
-        default=1000000,
+        default=100000,
     )
     # Note: only some algos (e.g. PPO) can use LSTM Policy the feature below is for future testing
     parser.add_argument(
@@ -337,8 +333,8 @@ def parse_args():
         "--reward_function",
         help="reward function to test",
         type=str,
-        default="lcr",
-        choices=["scaled_cost_distance", "log_cost_regularized", "scd", "lcr"],
+        default="market_solving",
+        choices = ["market_solving", "profit_maximizing"],
     )
     parser.add_argument(
         "--learning_rate",
@@ -346,11 +342,16 @@ def parse_args():
         type=float,
         default=3e-4,
     )
+    parser.add_argument(
+        "--pb_scenarios",
+        type=int,
+        default = "T",
+        choices=["T", "F"])
     args = parser.parse_args()
 
     args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")
     args.rl_log_path = os.path.join(args.log_path, "rl/")
-    
+
 
     return args
 
@@ -382,7 +383,7 @@ def main():
     print("Beginning Testing!")
     r_real = train(
         model,
-        args.num_steps * (1 + args.planning_steps),
+        args.num_steps,
         planning_steps=args.planning_steps,
         tb_log_name=args.exp_name
     )
