@@ -345,8 +345,9 @@ def parse_args():
     parser.add_argument(
         "--pb_scenarios",
         type=int,
-        default = "T",
-        choices=["T", "F"])
+        default = 1,
+        help="1 is for repeated PV, 2 for small, 3 or medium scenario",
+        choices=[1,2,3])
     args = parser.parse_args()
 
     args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")
