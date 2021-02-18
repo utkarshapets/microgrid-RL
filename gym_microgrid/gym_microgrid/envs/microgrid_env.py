@@ -86,6 +86,7 @@ class MicrogridEnv(gym.Env):
         self.reward_function = reward_function
         self.fourier_basis_size = fourier_basis_size
         self.manual_tou_magnitude = manual_tou_magnitude
+        self.complex_batt_pv_scenario = complex_batt_pv_scenario
 
         self.day = 0
         self.days_of_week = [0, 1, 2, 3, 4]
@@ -133,7 +134,6 @@ class MicrogridEnv(gym.Env):
         )
 
         self.iteration = 0
-        self.complex_batt_pv_scenario = complex_batt_pv_scenario
 
         print("\n Microgrid Environment Initialized! Have Fun! \n")
 
