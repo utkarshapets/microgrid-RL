@@ -171,8 +171,16 @@ class MicrogridEnv(gym.Env):
         prosumer_dict = {}
 
         # Manually set battery numbers and PV sizes
-        battery_nums = [50]*self.number_of_participants
-        pvsizes = [100]*self.number_of_participants
+        # battery_nums = [50]*self.number_of_participants
+        # pvsizes = [100]*self.number_of_participants
+
+        # Realistic sizes
+        # pvsizes = [70,110,400,70,30,0,0,55,10,10]
+        # battery_nums = [0,0,150,30,50,0,0,100,40,150]
+
+        # Small investments
+        pvsizes = [70,10,100,10,30,0,0,55,10,10]
+        battery_nums = [0,0,50,30,50,0,0,10,40,50]
 
         # Get energy from building_data.csv file, each office building has readings in kWh. Interpolate to fill missing values
         # df = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv').interpolate()
@@ -180,7 +188,7 @@ class MicrogridEnv(gym.Env):
         building_names = df.columns[5:] # Skip first few columns 
         for i in range(len(building_names)):
             name = building_names[i]
-            prosumer = Prosumer(name, np.squeeze(df[[name]].values), np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
+            prosumer = Prosumer(name, np.squeeze(df[[name]].values), 0.001*np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
             prosumer_dict[name] = prosumer
 
         return prosumer_dict
@@ -382,8 +390,9 @@ class MicrogridEnv(gym.Env):
         buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365] 
 
         # Adding in mean zero Gaussian noise
-        generation_tomorrow_nonzero = (generation_tomorrow > 1) # when is generation non zero?
-        generation_tomorrow += generation_tomorrow_nonzero* np.random.normal(loc = 0, scale = 10, size = 24) # Add in Gaussian noise when gen in non zero
+        noise = np.random.normal(loc = 0, scale = 10, size = 24)
+        generation_tomorrow_nonzero = (generation_tomorrow > abs(noise)) # when is generation non zero?
+        generation_tomorrow += generation_tomorrow_nonzero* noise # Add in Gaussian noise when gen in non zero
 
         return np.concatenate(
             (prev_energy, generation_tomorrow, buyprice_grid_tomorrow))
