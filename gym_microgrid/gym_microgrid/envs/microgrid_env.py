@@ -417,13 +417,9 @@ class MicrogridEnv(gym.Env):
             if self.action_space_string == 'continuous':
                 action = np.clip(action, -1, 1)
                 # TODO: ask Lucas about this
-
-            elif self.action_space_string == 'multidiscrete':
-                action = np.clip(action, 0, 2)
-
-            elif self.action_space_string == "fourier":
-                assert False, "Fourier basis mode, got incorrect action. This should never happen. action: {}".format(action)
-
+            else:
+                print("wrong action_space_string")
+                raise AssertionError
 
         # prev_price = self.prices[(self.day)]
         self.day = (self.day + 1) % 365 
