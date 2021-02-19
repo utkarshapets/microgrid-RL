@@ -55,4 +55,4 @@ python StableBaselines.py sac --exp_name=2021_02_19_twoprice_pm_medium_d --rewar
 python StableBaselines.py sac --exp_name=2021_02_19_twoprice_pm_small_d --reward_function="profit_maximizing" --pb_scenario=3 --two_price_state = T &
 python StableBaselines.py sac --exp_name=2021_02_19_twoprice_pm_no_batt_d --reward_function="profit_maximizing" --pb_scenario=4 --two_price_state = T &
 python StableBaselines.py sac --exp_name=2021_02_19_twoprice_pm_no_solar_d --reward_function="profit_maximizing" --pb_scenario=5 --two_price_state = T &
-python StableBaselines.py sac --exp_name=2021_02_19_twoprice_pm_nothing_d --reward_function="profit_maximizing" --pb_scenario=6 --two_price_state = T &
+python StableBaselines.py sac --exp_name=2021_02_19_twoprice_pm_nothing_d --reward_function="profit_maximizing" --pb_scenario=6 --two_price_state = T 
