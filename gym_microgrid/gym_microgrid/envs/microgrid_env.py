@@ -573,7 +573,7 @@ class MicrogridEnv(gym.Env):
             if not self.iteration % 50:
                 print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
 
-            if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
+            if ((not self.iteration % 50) or self.iteration>15000):
 
                 self.logger_df.loc[self.iteration] = np.concatenate(
                     (   
