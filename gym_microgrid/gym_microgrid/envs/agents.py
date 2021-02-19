@@ -67,19 +67,19 @@ class Prosumer():
                 prob = cvx.Problem(obj, constraints)
 
                 try:
-                        prob.solve(solver = cvx.ECOS)
+                        prob.solve(solver = cvx.SCS)
                 except SolverError: 
                         try:
-                                print("ECOS solver did not work")
-                                prob.solve(solver = cvx.SCS)
+                                print("SCS solver did not work")
+                                prob.solve(solver = cvx.OSQP)
                         except SolverError:
                                 try:
-                                        print("SCS or ECOS didn't work")
+                                        print("OSQP or ECOS didn't work")
                                         prob.solve(solver = cvx.ECOS_BB)
                                 except SolverError:
                                         try:
                                                 print("Three didn't work")
-                                                prob.solve(solver = cvs.OSQP)
+                                                prob.solve(solver = cvs.ECOS)
                                         except SolverError:
                                                 print("none of the solvers work")
 
@@ -124,16 +124,16 @@ class Prosumer():
                 prob = cvx.Problem(obj, constraints)
         
                 try:
-                        prob.solve(solver = cvx.ECOS)
+                        prob.solve(solver = cvx.SCS)
                 except SolverError: 
                         try:
-                                prob.solve(solver = cvx.SCS)
+                                prob.solve(solver = cvx.OSQP)
                         except SolverError:
                                 try:
                                         prob.solve(solver = cvx.ECOS_BB)
                                 except SolverError:
                                         try:
-                                                prob.solve(solver = cvs.OSQP)
+                                                prob.solve(solver = cvs.ECOS)
                                         except SolverError:
                                                 print("none of the solvers work")
                         

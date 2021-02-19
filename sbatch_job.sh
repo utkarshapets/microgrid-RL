@@ -29,16 +29,16 @@
 module load python/3.6
 source /global/home/users/lucas_spangher/transactive_control/auto_keras_env/bin/activate
 ## market_solving
-python StableBaselines.py sac --exp_name=2021_02_18_ms_large_a --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_18_ms_medium_a --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_18_ms_small_a --reward_function="market_solving" --pb_scenario=3 &
-python StableBaselines.py sac --exp_name=2021_02_18_ms_large_b --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_18_ms_medium_b --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_18_ms_small_b --reward_function="market_solving" --pb_scenario=3 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_large_c --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_medium_c --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_small_c --reward_function="market_solving" --pb_scenario=3 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_large_d --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_medium_d --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_ms_small_d --reward_function="market_solving" --pb_scenario=3 &
 ## profit maximizing
-python StableBaselines.py sac --exp_name=2021_02_18_pm_large_a --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_a --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_small_a --reward_function="market_solving" --pb_scenario=3 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_large_b --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_b --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_small_b --reward_function="market_solving" --pb_scenario=3
+python StableBaselines.py sac --exp_name=2021_02_18_pm_large_c --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_c --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_small_c --reward_function="market_solving" --pb_scenario=3 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_large_d --reward_function="market_solving" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_d --reward_function="market_solving" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_small_d --reward_function="market_solving" --pb_scenario=3
