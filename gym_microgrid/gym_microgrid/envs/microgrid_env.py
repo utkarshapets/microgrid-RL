@@ -135,6 +135,20 @@ class MicrogridEnv(gym.Env):
                     )
                 )
             )
+        else:
+            self.logger_df = pd.DataFrame(
+                columns = np.concatenate(
+                (   
+                    ["iteration"],
+                    ["reward"],
+                    ["t_buyprice" + str(i) for i in range(24)],
+                    ["t_sellprice" + str(i) for i in range(24)],
+                    ["b_price" + str(i) for i in range(24)],
+                    ["s_price" + str(i) for i in range(24)],
+                    ["e" + str(i) for i in range(24)],
+                    )
+                )
+            )
 
         self.iteration = 0
 
@@ -314,9 +328,6 @@ class MicrogridEnv(gym.Env):
         Args:
             Action: 24-dim vector corresponding to action for each hour
 
-            or a 2*fourier_basis_size - 1 length vector corresponding to fourier basis weights
-            if action_space_string == "fourier"
-
         Returns: Price: 24-dim vector of transactive prices
         """
         
@@ -326,11 +337,23 @@ class MicrogridEnv(gym.Env):
         sellprice_grid = self.sellprices_grid[day]
         
         # -1 -> sellprice. 1 -> buyprice
-        midpoint_price = (buyprice_grid + sellprice_grid)/2
-        diff_grid = buyprice_grid - sellprice_grid
-        scaled_diffs = np.multiply(action, diff_grid)/2 # Scale to fit difference at each hour
-        price = scaled_diffs + midpoint_price
-        return price
+
+        if not self.two_price_state:
+            midpoint_price = (buyprice_grid + sellprice_grid)/2
+            diff_grid = buyprice_grid - sellprice_grid
+            scaled_diffs = np.multiply(action, diff_grid)/2 # Scale to fit difference at each hour
+            price = scaled_diffs + midpoint_price
+            return price
+
+        else:
+            midpoint_price = (buyprice_grid + sellprice_grid)/2
+            diff_grid = buyprice_grid - sellprice_grid
+            scaled_diffs_bp = np.multiply(action[0:24], diff_grid)/2 # Scale to fit difference at each hour
+            scaled_diffs_sp = np.multiply(action[24:], diff_grid)/2 # Scale to fit difference at each hour
+            buyprice = scaled_diffs_bp + midpoint_price
+            sellprice = scaled_diffs_sp + midpoint_price
+            return buyprice, sellprice
+
 
     def _simulate_humans(self, day, price):
         """
@@ -353,6 +376,36 @@ class MicrogridEnv(gym.Env):
             #Get players response to agent's actions
             prosumer = self.prosumer_dict[prosumer_name]
             prosumer_demand = prosumer.get_response(day, price)
+  
+            #Calculate energy consumption by prosumer and in total (entire aggregation)
+            energy_consumptions[prosumer_name] = prosumer_demand
+            total_consumption += prosumer_demand
+
+
+        energy_consumptions["Total"] = total_consumption 
+        return energy_consumptions
+
+    def _simulate_prosumers_twoprices(self, day, buyprice, sellprice):
+        """
+        Purpose: Gets energy consumption from players given action from agent
+                 Price: transactive price set in day-ahead manner
+
+        Args:
+            Day: day of the year. Values allowed [0, 365)
+            Price: 2 24-dim vector corresponding to a price for each hour of the day
+
+        Returns:
+            Energy_consumption: Dictionary containing the energy usage by prosumer. Key 'Total': aggregate net energy consumption
+        """
+
+        energy_consumptions = {}
+        total_consumption = np.zeros(24)
+
+        for prosumer_name in self.prosumer_dict:
+            
+            #Get players response to agent's actions
+            prosumer = self.prosumer_dict[prosumer_name]
+            prosumer_demand = prosumer.get_response_twoprices(day, buyprice, sellprice)
   
             #Calculate energy consumption by prosumer and in total (entire aggregation)
             energy_consumptions[prosumer_name] = prosumer_demand
@@ -393,6 +446,39 @@ class MicrogridEnv(gym.Env):
 
         return total_reward
 
+    def _get_reward_twoprices(self, buyprice_grid, sellprice_grid, transactive_buyprice, transactive_sellprice, energy_consumptions):
+        """
+        Purpose: Compute reward given grid prices, transactive price set ahead of time, and energy consumption of the participants
+
+        Args:
+            buyprice_grid: price at which energy is bought from the utility (24 dim vector)
+            sellprice_grid: price at which energy is sold to the utility by the RL agent (24 dim vector)
+            transactive_buyprice: price set by RL agent for local market in day ahead manner (24 dim vector)
+            transactive_sellprice: price set by RL agent for local market in day ahead manner (24 dim vector)
+            energy_consumptions: Dictionary containing energy usage by each prosumer, as well as the total
+
+        Returns:
+            Reward for RL agent (- |net money flow|): in order to get close to market equilibrium
+        """
+
+        total_consumption = energy_consumptions['Total']
+        money_to_utility = np.dot(np.maximum(0, total_consumption), buyprice_grid) + np.dot(np.minimum(0, total_consumption), sellprice_grid)
+        money_from_prosumers = np.dot(np.maximum(0, total_consumption), transactive_buyprice) + np.dot(np.minimum(0, total_consumption), transactive_sellprice)
+
+
+        if self.reward_function == "market_solving":
+            total_reward = - abs(
+                    money_from_prosumers - money_to_utility
+                )
+
+        elif self.reward_function =="profit_maximizing":
+            total_reward = (
+                    money_from_prosumers - money_to_utility
+                )
+
+        return total_reward
+
+
 
     def step(self, action):
         """
@@ -432,42 +518,77 @@ class MicrogridEnv(gym.Env):
 
         done = self.curr_iter > 0
 
-        price = self._price_from_action(action)
+        if not self.two_price_state:
+            price = self._price_from_action(action)
+            self.price = price
 
-        ## TODO: store step_num, day, and price every 100 days 
-        self.price = price
+            energy_consumptions = self._simulate_humans(day = self.day, price = price)
+            self.prev_energy = energy_consumptions["Total"]
 
-        energy_consumptions = self._simulate_humans(day = self.day, price = price)
-        self.prev_energy = energy_consumptions["Total"]
-
-        observation = self._get_observation()
+            observation = self._get_observation()
         
-        buyprice_grid = self.buyprices_grid[self.day]
-        sellprice_grid = self.sellprices_grid[self.day]
-        reward = self._get_reward(buyprice_grid, sellprice_grid, price, energy_consumptions)
+            buyprice_grid = self.buyprices_grid[self.day]
+            sellprice_grid = self.sellprices_grid[self.day]
+            reward = self._get_reward(buyprice_grid, sellprice_grid, price, energy_consumptions)
 
 
-        info = {}
+            info = {}
 
-        # data frame logger. Delete soon 
+            # data frame logger. Delete soon 
 
-        if not self.iteration % 100:
-            print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
+            if not self.iteration % 100:
+                print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
 
-        if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
+            if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
 
-            self.logger_df.loc[self.iteration] = np.concatenate(
-                (   
-                    [self.iteration],
-                    [reward],
-                    price,
-                    buyprice_grid,
-                    sellprice_grid,
-                    self.prev_energy,
-                    ))
-            self.logger_df.to_csv("logs/" + str(self.exp_name) + "/" +str(self.exp_name) + ".csv")
+                self.logger_df.loc[self.iteration] = np.concatenate(
+                    (   
+                        [self.iteration],
+                        [reward],
+                        price,
+                        buyprice_grid,
+                        sellprice_grid,
+                        self.prev_energy,
+                        ))
+                self.logger_df.to_csv("logs/" + str(self.exp_name) + "/" +str(self.exp_name) + ".csv")
+            
+            self.iteration += 1
+
+        else: 
+
+            buyprice, sellprice = self._price_from_action(action)
+            # self.price = price
+
+            energy_consumptions = self._simulate_prosumers_twoprices(day = self.day, buyprice, sellprice)
+            self.prev_energy = energy_consumptions["Total"]
+
+            observation = self._get_observation()
         
-        self.iteration += 1
+            buyprice_grid = self.buyprices_grid[self.day]
+            sellprice_grid = self.sellprices_grid[self.day]
+            reward = self._get_reward_twoprices(buyprice_grid, sellprice_grid, buyprice, sellprice, energy_consumptions)
+            info = {}
+
+            # data frame logger. Delete soon 
+
+            if not self.iteration % 100:
+                print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
+
+            if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
+
+                self.logger_df.loc[self.iteration] = np.concatenate(
+                    (   
+                        [self.iteration],
+                        [reward],
+                        buyprice,
+                        sellprice,
+                        buyprice_grid,
+                        sellprice_grid,
+                        self.prev_energy,
+                        ))
+                self.logger_df.to_csv("logs/" + str(self.exp_name) + "/" +str(self.exp_name) + ".csv")
+            
+            self.iteration += 1
 
         return observation, reward, done, info
 
