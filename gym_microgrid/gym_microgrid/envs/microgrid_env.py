@@ -463,8 +463,10 @@ class MicrogridEnv(gym.Env):
 
         total_consumption = energy_consumptions['Total']
         money_to_utility = np.dot(np.maximum(0, total_consumption), buyprice_grid) + np.dot(np.minimum(0, total_consumption), sellprice_grid)
-        money_from_prosumers = np.dot(np.maximum(0, total_consumption), transactive_buyprice) + np.dot(np.minimum(0, total_consumption), transactive_sellprice)
 
+        money_from_prosumers = 0
+        for prosumerName in energy_consumptions:
+            money_from_prosumers += (np.dot(np.maximum(0, energy_consumptions[prosumerName]), transactive_buyprice) + np.dot(np.minimum(0, energy_consumptions[prosumerName]), transactive_sellprice))
 
         if self.reward_function == "market_solving":
             total_reward = - abs(

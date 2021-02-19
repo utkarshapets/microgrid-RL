@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import cvxpy as cvx
-import scipy.opt
+from scipy.optimize import minimize
 from sklearn.preprocessing import MinMaxScaler
 from cvxpy.error import SolverError
 
@@ -147,7 +147,7 @@ class Prosumer():
                 # net = demand - pv_size*pv_24h + (-eta + 1/eta)*abs(sol['x'])/2 + (eta + 1/eta)*sol['x']/2
 
                 x = sol['x']
-                net = demand - pv_size*pv_24h + (-eta + 1/eta)*abs(x)/2 + (eta + 1/eta)*x/2
+                net = load - gen + (-eta + 1/eta)*abs(x)/2 + (eta + 1/eta)*x/2
                 # sol['x'] = x
                 # sol['fun'] = dailyobjective(x)
                 return np.array(net)
