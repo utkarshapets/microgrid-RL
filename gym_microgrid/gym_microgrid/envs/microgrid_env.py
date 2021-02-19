@@ -73,7 +73,6 @@ class MicrogridEnv(gym.Env):
             number_of_participants,
             one_day,
             energy_in_state,
-            yesterday_in_state,
             fourier_basis_size
         )
 
@@ -535,7 +534,7 @@ class MicrogridEnv(gym.Env):
             if not self.iteration % 100:
                 print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
 
-            if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
+            if ((not self.iteration % 50) or self.iteration>15000):
 
                 self.logger_df.loc[self.iteration] = np.concatenate(
                     (   
@@ -555,7 +554,11 @@ class MicrogridEnv(gym.Env):
             buyprice, sellprice = self._price_from_action(action)
             # self.price = price
 
-            energy_consumptions = self._simulate_prosumers_twoprices(day = self.day, buyprice, sellprice)
+            energy_consumptions = self._simulate_prosumers_twoprices(
+                day = self.day, 
+                buyprice = buyprice, 
+                sellprice = sellprice)
+
             self.prev_energy = energy_consumptions["Total"]
 
             observation = self._get_observation()
@@ -567,7 +570,7 @@ class MicrogridEnv(gym.Env):
 
             # data frame logger. Delete soon 
 
-            if not self.iteration % 100:
+            if not self.iteration % 50:
                 print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
 
             if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
@@ -615,7 +618,7 @@ class MicrogridEnv(gym.Env):
 
 
     def check_valid_init_inputs(self, action_space_string: str, response_type_string: str, number_of_participants = 10,
-                one_day = False, energy_in_state = False, yesterday_in_state = False, fourier_basis_size = 4):
+                one_day = False, energy_in_state = False, fourier_basis_size = 4):
 
         """
         Purpose: Verify that all initialization variables are valid
@@ -658,8 +661,6 @@ class MicrogridEnv(gym.Env):
         #Checking that energy_in_state is valid
         assert isinstance(energy_in_state, bool), "Variable one_day is not of type Boolean. Instead got type {}".format(type(energy_in_state))
 
-        #Checking that yesterday_in_state is valid
-        assert isinstance(yesterday_in_state, bool), "Variable one_day is not of type Boolean. Instead got type {}".format(type(yesterday_in_state))
         print("all inputs valid")
 
         assert isinstance(

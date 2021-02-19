@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import cvxpy as cvx
-import scipy.opt
+from scipy.optimize import minimize
 from sklearn.preprocessing import MinMaxScaler
 from cvxpy.error import SolverError
 
@@ -115,6 +115,7 @@ class Prosumer():
                 c_rate = self.c_rate
                 Ltri = np.tril(np.ones((24, 24)))
 
+
                 def dailyobjective(x):
                         net = load - gen + (-eta + 1/eta)*abs(x)/2 + (eta + 1/eta)*x/2
                         return sum(np.maximum(net,0)*buyprice) + sum(np.minimum(net,0)*sellprice) 
@@ -143,11 +144,19 @@ class Prosumer():
         
                 x0 = [battery_num*capacity]*24
                 # x0 = [0]*24
+                
                 sol = minimize(dailyobjective, x0, constraints=cons_hourly, method='SLSQP', options={'maxiter':10000})
-                # net = demand - pv_size*pv_24h + (-eta + 1/eta)*abs(sol['x'])/2 + (eta + 1/eta)*sol['x']/2
 
-                x = sol['x']
-                net = demand - pv_size*pv_24h + (-eta + 1/eta)*abs(x)/2 + (eta + 1/eta)*x/2
+
+                if not sol.success:
+                        net = load - gen 
+                else: 
+                        x = sol['x']
+                        net = load - gen + (-eta + 1/eta)*abs(x)/2 + (eta + 1/eta)*x/2
+                        upper_bound = load - gen + np.ones(24) * capacity * battery_num * c_rate
+                        lower_bound = load - gen - np.ones(24) * capacity * battery_num * c_rate
+                        net = np.minimum(net, upper_bound)         # upper bound 
+                        net = np.maximum(net, lower_bound)         # lower bound 
                 # sol['x'] = x
                 # sol['fun'] = dailyobjective(x)
                 return np.array(net)
