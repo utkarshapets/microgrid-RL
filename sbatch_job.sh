@@ -9,7 +9,7 @@
 #SBATCH --partition=savio2
 #
 # Request one node:
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #
 # Request cores (24, for example)
 #SBATCH --ntasks-per-node=24
@@ -18,7 +18,7 @@
 #SBATCH --gres=gpu:0
 #
 #Request CPU
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=1
 #
 # Wall clock limit:
 #SBATCH --time=30:00:00
