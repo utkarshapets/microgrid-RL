@@ -68,19 +68,19 @@ class Prosumer():
 
                 try:
                         prob.solve(solver = cvx.SCS)
-                except SolverError: 
+                except: 
                         try:
                                 print("SCS solver did not work")
                                 prob.solve(solver = cvx.OSQP)
-                        except SolverError:
+                        except:
                                 try:
                                         print("OSQP or ECOS didn't work")
                                         prob.solve(solver = cvx.ECOS_BB)
-                                except SolverError:
+                                except:
                                         try:
                                                 print("Three didn't work")
                                                 prob.solve(solver = cvs.ECOS)
-                                        except SolverError:
+                                        except:
                                                 print("none of the solvers work")
 
                 charged = prob.variables()[0].value
