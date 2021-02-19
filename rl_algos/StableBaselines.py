@@ -105,8 +105,8 @@ def args_convert_bool(args):
     """
     Purpose: Convert args which are specified as strings (e.g. yesterday, energy) into boolean to work with environment
     """
-    if not isinstance(args.yesterday, (bool)):
-        args.yesterday = utils.string2bool(args.yesterday)
+    if not isinstance(args.two_price_state, (bool)):
+        args.two_price_state = utils.string2bool(args.two_price_state)
     if not isinstance(args.energy, (bool)):
         args.energy = utils.string2bool(args.energy)
     if not isinstance(args.test_planning_env, (bool)):
@@ -153,7 +153,6 @@ def get_environment(args, include_non_vec_env=False):
             response_type_string=args.response,
             one_day=args.one_day,
             number_of_participants=args.num_players,
-            yesterday_in_state=args.yesterday,
             energy_in_state=args.energy,
             pricing_type=args.pricing_type,
             reward_function=args.reward_function,
@@ -161,6 +160,7 @@ def get_environment(args, include_non_vec_env=False):
             manual_tou_magnitude=args.manual_tou_magnitude,
             complex_batt_pv_scenario = args.pb_scenario,
             exp_name = args.exp_name,
+            two_price_state=args.two_price_state,
         )
     else:
         # go into the planning mode
@@ -286,13 +286,6 @@ def parse_args():
         choices=[i for i in range(1, 21)],
     )
     parser.add_argument(
-        "--yesterday",
-        help="Whether to include yesterday in state (default = F)",
-        type=str,
-        default="F",
-        choices=["T", "F"],
-    )
-    parser.add_argument(
         "--energy",
         help="Whether to include energy in state (default = F)",
         type=str,
@@ -342,10 +335,17 @@ def parse_args():
     )
     parser.add_argument(
         "--pb_scenario",
-        type=int,
+        type = int,
         default = 1,
-        help="1 is for repeated PV, 2 for small, 3 or medium scenario, 4 no batt, 5 no solar, 6 nothing",
-        choices=[1,2,3, 4, 5, 6])
+        help = "1 is for repeated PV, 2 for small, 3 or medium scenario, 4 no batt, 5 no solar, 6 nothing",
+        choices = [ 1, 2, 3, 4, 5, 6 ]),
+    parser.add_argument(
+        "--two_price_state",
+        help="Whether to include buy and sell price in state (default = F)",
+        type=str,
+        default="F",
+        choices=["T", "F"],
+    )
     args = parser.parse_args()
 
     args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")

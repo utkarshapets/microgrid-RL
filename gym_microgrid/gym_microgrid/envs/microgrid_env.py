@@ -37,7 +37,6 @@ class MicrogridEnv(gym.Env):
         number_of_participants = 10,
         one_day = 0,
         energy_in_state = False,
-        yesterday_in_state = False,
         day_of_week = False,
         pricing_type="TOU",
         reward_function = "scaled_cost_distance",
@@ -45,7 +44,9 @@ class MicrogridEnv(gym.Env):
         manual_tou_magnitude=None,
         complex_batt_pv_scenario=1,
         exp_name = None,
+        two_price_state = False,
         ):
+
         """
         MicrogridEnv for an agent determining incentives in a social game.
 
@@ -82,7 +83,7 @@ class MicrogridEnv(gym.Env):
         self.number_of_participants = number_of_participants
         self.one_day = self._find_one_day(one_day)
         self.energy_in_state = energy_in_state
-        self.yesterday_in_state = yesterday_in_state
+        self.two_price_state = two_price_state
         self.reward_function = reward_function
         self.fourier_basis_size = fourier_basis_size
         self.manual_tou_magnitude = manual_tou_magnitude
@@ -186,7 +187,10 @@ class MicrogridEnv(gym.Env):
 
 
         #Making a symmetric, continuous space to help learning for continuous control (suggested in StableBaselines doc.)
-        return spaces.Box(low=-1, high=1, shape=(self.day_length,), dtype=np.float32)
+        if not self.two_price_state:
+            return spaces.Box(low=-1, high=1, shape=(self.day_length,), dtype=np.float32)
+        else: 
+            return spaces.Box(low = -1, high = 1, shape = (2 * self.day_length, ), dtype = np.float32)
         
 
     def _create_agents(self):
