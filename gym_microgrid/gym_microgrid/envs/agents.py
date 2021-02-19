@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import cvxpy as cvx
+import scipy.opt
 from sklearn.preprocessing import MinMaxScaler
 from cvxpy.error import SolverError
 
@@ -88,6 +89,69 @@ class Prosumer():
                 net = load - gen + charged/eta + discharged*eta
 
                 return np.array(net)
+
+        def get_response_twoprices(
+                self, 
+                day, 
+                buyprice,
+                sellprice
+                ):
+
+                """
+                Determines the net load of the prosumer on a specific day, in response to energy prices
+        		
+                Args:
+        		day: day of the year. Allowed values: [0,365)
+        		buyprice: 24 hour price vector, supplied as an np.array
+                        sellprice: 24 hour price vector, supplied as an np.array
+                        """
+
+                index = day*24+19
+                load = self.yearlongdemand[index : index + 24]
+                gen = self.pv_size*self.yearlonggeneration[index : index + 24]
+                eta = self.eta
+                capacity = self.capacity
+                battery_num = self.battery_num
+                c_rate = self.c_rate
+                Ltri = np.tril(np.ones((24, 24)))
+
+                def dailyobjective(x):
+                        net = load - gen + (-eta + 1/eta)*abs(x)/2 + (eta + 1/eta)*x/2
+                        return sum(np.maximum(net,0)*buyprice) + sum(np.minimum(net,0)*sellprice) 
+
+                def hourly_con_charge_max(x):
+                        # Shouldn't charge or discharge too fast
+                        return c_rate*capacity*battery_num - x 
+
+                def hourly_con_charge_min(x):
+                        # Shouldn't charge or discharge too fast
+                        return c_rate*capacity*battery_num + x 
+
+                def hourly_con_cap_max(x):
+                        # x should respect the initial state of charge
+                        return capacity*battery_num - np.matmul(Ltri,x)
+
+                def hourly_con_cap_min(x):
+                        # x should respect the initial state of charge
+                        return np.matmul(Ltri,x)
+
+                con1_hourly = {'type':'ineq', 'fun':hourly_con_charge_min}
+                con2_hourly = {'type':'ineq', 'fun':hourly_con_charge_max}
+                con3_hourly = {'type':'ineq', 'fun':hourly_con_cap_min}
+                con4_hourly = {'type':'ineq', 'fun':hourly_con_cap_max}
+                cons_hourly = (con1_hourly, con2_hourly, con3_hourly, con4_hourly)
+        
+                x0 = [battery_num*capacity]*24
+                # x0 = [0]*24
+                sol = minimize(dailyobjective, x0, constraints=cons_hourly, method='SLSQP', options={'maxiter':10000})
+                # net = demand - pv_size*pv_24h + (-eta + 1/eta)*abs(sol['x'])/2 + (eta + 1/eta)*sol['x']/2
+
+                x = sol['x']
+                net = demand - pv_size*pv_24h + (-eta + 1/eta)*abs(x)/2 + (eta + 1/eta)*x/2
+                # sol['x'] = x
+                # sol['fun'] = dailyobjective(x)
+                return np.array(net)
+
 
         def get_battery_operation(
                 self, 

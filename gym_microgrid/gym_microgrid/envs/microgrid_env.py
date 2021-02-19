@@ -186,7 +186,10 @@ class MicrogridEnv(gym.Env):
 
 
         #Making a symmetric, continuous space to help learning for continuous control (suggested in StableBaselines doc.)
-        return spaces.Box(low=-1, high=1, shape=(self.day_length,), dtype=np.float32)
+        # return spaces.Box(low=-1, high=1, shape=(self.day_length,), dtype=np.float32)
+
+        # DIfferent buy and sell prices 
+        return spaces.Box(low=-1, high=1, shape=(2*self.day_length,), dtype=np.float32)
         
 
     def _create_agents(self):
