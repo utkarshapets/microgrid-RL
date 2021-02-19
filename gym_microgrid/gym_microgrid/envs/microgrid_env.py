@@ -14,6 +14,20 @@ from gym_microgrid.envs.reward import Reward
 import pickle
 import IPython
 
+
+## TODO: print plotter reactions
+##       try where profit is maximized
+##       inefficiencies in the grid -- 
+##          optimal price will result in more energy saved due to avoiding transmission losses 
+
+##       run scenarios 1, 2, 3
+##       change reward to be profit maximizing
+##       
+
+##
+## prepare to run on savio? 
+## 
+
 class MicrogridEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
@@ -29,6 +43,8 @@ class MicrogridEnv(gym.Env):
         reward_function = "scaled_cost_distance",
         fourier_basis_size=4,
         manual_tou_magnitude=None,
+        complex_batt_pv_scenario=1,
+        exp_name = None,
         ):
         """
         MicrogridEnv for an agent determining incentives in a social game.
@@ -70,6 +86,8 @@ class MicrogridEnv(gym.Env):
         self.reward_function = reward_function
         self.fourier_basis_size = fourier_basis_size
         self.manual_tou_magnitude = manual_tou_magnitude
+        self.complex_batt_pv_scenario = complex_batt_pv_scenario
+        self.exp_name=exp_name
 
         self.day = 0
         self.days_of_week = [0, 1, 2, 3, 4]
@@ -83,7 +101,7 @@ class MicrogridEnv(gym.Env):
         self.pricing_type = "real_time_pricing" if pricing_type.upper() == "RTP" else "time_of_use"
 
         self.buyprices_grid, self.sellprices_grid = self._get_prices()
-        self.prices = self.buyprices_grid #Initialise to buyprices_grid
+        # self.prices = self.buyprices_grid #Initialise to buyprices_grid
         self.generation = self._get_generation()
 
         #Day corresponds to day # of the yr
@@ -102,6 +120,21 @@ class MicrogridEnv(gym.Env):
 
         #TODO: Check initialization of prev_energy
         self.prev_energy = np.zeros(self.day_length)
+
+        self.logger_df = pd.DataFrame(
+            columns = np.concatenate(
+            (   
+                ["iteration"],
+                ["reward"],
+                ["t_price" + str(i) for i in range(24)],
+                ["b_price" + str(i) for i in range(24)],
+                ["s_price" + str(i) for i in range(24)],
+                ["e" + str(i) for i in range(24)],
+                )
+            )
+        )
+
+        self.iteration = 0
 
         print("\n Microgrid Environment Initialized! Have Fun! \n")
 
@@ -171,24 +204,49 @@ class MicrogridEnv(gym.Env):
         prosumer_dict = {}
 
         # Manually set battery numbers and PV sizes
-        # battery_nums = [50]*self.number_of_participants
-        # pvsizes = [100]*self.number_of_participants
 
-        # Realistic sizes
-        # pvsizes = [70,110,400,70,30,0,0,55,10,10]
-        # battery_nums = [0,0,150,30,50,0,0,100,40,150]
+        ## large and constant batt and PV
+        if self.complex_batt_pv_scenario == 1:
+            battery_nums = [50]*self.number_of_participants
+            pvsizes = [100]*self.number_of_participants
 
-        # Small investments
-        pvsizes = [70,10,100,10,30,0,0,55,10,10]
-        battery_nums = [0,0,50,30,50,0,0,10,40,50]
+        ## small PV sizes
+        elif self.complex_batt_pv_scenario ==2: 
+            pvsizes = [ 0, 10, 100, 10, 0, 0, 0, 55, 10, 10 ]
+            battery_nums = [ 0, 0, 50, 30, 50, 0, 0, 10, 40, 50 ]
 
-        # Get energy from building_data.csv file, each office building has readings in kWh. Interpolate to fill missing values
+        ## medium PV sizes and different
+        elif self.complex_batt_pv_scenario == 3:
+            pvsizes = [ 70, 110, 400, 70, 30, 0, 0, 55, 10, 20 ]
+            battery_nums = [ 0, 0, 150, 30, 50, 0, 0, 100, 40, 150]
+
+        ## no batteries 
+        elif self.complex_batt_pv_scenario == 4:
+            pvsizes = [ 70, 110, 400, 70, 30, 0, 0, 55, 10, 20 ]
+            battery_nums = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+        
+        # no solar 
+        elif self.complex_batt_pv_scenario == 5:
+            pvsizes = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+            battery_nums = [ 0, 0, 150, 30, 50, 0, 0, 100, 40, 150 ]
+        
+        # nothing at all 
+        elif self.complex_batt_pv_scenario == 6:
+            pvsizes = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+            battery_nums = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+
+        # wrong number 
+        else:
+            print("you've inputted an incorrect scenario")
+            raise AssertionError
+
+        # Get energy from building_data.csv file,  each office building has readings in kWh. Interpolate to fill missing values
         # df = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv').interpolate()
         df = pd.read_csv('../building_data.csv').interpolate().fillna(0)
         building_names = df.columns[5:] # Skip first few columns 
         for i in range(len(building_names)):
             name = building_names[i]
-            prosumer = Prosumer(name, np.squeeze(df[[name]].values), 0.001*np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
+            prosumer = Prosumer(name, np.squeeze(df[[name]].values), .001*np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
             prosumer_dict[name] = prosumer
 
         return prosumer_dict
@@ -316,12 +374,16 @@ class MicrogridEnv(gym.Env):
         money_to_utility = np.dot(np.maximum(0, total_consumption), buyprice_grid) + np.dot(np.minimum(0, total_consumption), sellprice_grid)
         money_from_prosumers = np.dot(total_consumption, transactive_price)
 
-        total_reward = - np.log(
-            abs(
-                money_from_prosumers - money_to_utility
-                )
-            )
 
+        if self.reward_function == "market_solving":
+            total_reward = - abs(
+                    money_from_prosumers - money_to_utility
+                )
+
+        elif self.reward_function =="profit_maximizing":
+            total_reward = (
+                    money_from_prosumers - money_to_utility
+                )
 
         return total_reward
 
@@ -367,9 +429,8 @@ class MicrogridEnv(gym.Env):
         price = self._price_from_action(action)
 
         ## TODO: store step_num, day, and price every 100 days 
+        self.price = price
 
-
-        self.prices[(self.day)] = price
         energy_consumptions = self._simulate_humans(day = self.day, price = price)
         self.prev_energy = energy_consumptions["Total"]
 
@@ -379,7 +440,28 @@ class MicrogridEnv(gym.Env):
         sellprice_grid = self.sellprices_grid[self.day]
         reward = self._get_reward(buyprice_grid, sellprice_grid, price, energy_consumptions)
 
+
         info = {}
+
+        # data frame logger. Delete soon 
+
+        if not self.iteration % 100:
+            print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
+
+        if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
+
+            self.logger_df.loc[self.iteration] = np.concatenate(
+                (   
+                    [self.iteration],
+                    [reward],
+                    price,
+                    buyprice_grid,
+                    sellprice_grid,
+                    self.prev_energy,
+                    ))
+            self.logger_df.to_csv("logs/" + str(self.exp_name) + "/" +str(self.exp_name) + ".csv")
+        
+        self.iteration += 1
 
         return observation, reward, done, info
 
@@ -389,13 +471,13 @@ class MicrogridEnv(gym.Env):
         generation_tomorrow = self.generation[(self.day + 1)%365] 
         buyprice_grid_tomorrow = self.buyprices_grid[(self.day + 1)%365] 
 
-        # Adding in mean zero Gaussian noise
-        noise = np.random.normal(loc = 0, scale = 10, size = 24)
+        noise = np.random.normal(loc = 0, scale = 50, size = 24) ## TODO: get rid of this if not doing well
         generation_tomorrow_nonzero = (generation_tomorrow > abs(noise)) # when is generation non zero?
         generation_tomorrow += generation_tomorrow_nonzero* noise # Add in Gaussian noise when gen in non zero
 
         return np.concatenate(
-            (prev_energy, generation_tomorrow, buyprice_grid_tomorrow))
+            (prev_energy, generation_tomorrow, buyprice_grid_tomorrow)
+            )
         
 
     def reset(self):

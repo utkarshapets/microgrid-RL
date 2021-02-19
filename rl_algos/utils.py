@@ -14,7 +14,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 #data_path = os.path.join(os.getcwd(), "baselines", "behavioral_sim", "building_data.csv")
 # csv_path = os.path.dirname(os.path.realpath(__file__)) + "/building_data.csv"
-
+# test comment
 
 def price_signal(day = 45, type_of_DR = "real_time_pricing"):
 
