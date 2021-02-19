@@ -121,18 +121,19 @@ class MicrogridEnv(gym.Env):
         #TODO: Check initialization of prev_energy
         self.prev_energy = np.zeros(self.day_length)
 
-        self.logger_df = pd.DataFrame(
-            columns = np.concatenate(
-            (   
-                ["iteration"],
-                ["reward"],
-                ["t_price" + str(i) for i in range(24)],
-                ["b_price" + str(i) for i in range(24)],
-                ["s_price" + str(i) for i in range(24)],
-                ["e" + str(i) for i in range(24)],
+        if not self.two_price_state:
+            self.logger_df = pd.DataFrame(
+                columns = np.concatenate(
+                (   
+                    ["iteration"],
+                    ["reward"],
+                    ["t_price" + str(i) for i in range(24)],
+                    ["b_price" + str(i) for i in range(24)],
+                    ["s_price" + str(i) for i in range(24)],
+                    ["e" + str(i) for i in range(24)],
+                    )
                 )
             )
-        )
 
         self.iteration = 0
 
