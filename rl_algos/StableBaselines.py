@@ -344,8 +344,8 @@ def parse_args():
         "--pb_scenario",
         type=int,
         default = 1,
-        help="1 is for repeated PV, 2 for small, 3 or medium scenario",
-        choices=[1,2,3])
+        help="1 is for repeated PV, 2 for small, 3 or medium scenario, 4 no batt, 5 no solar, 6 nothing",
+        choices=[1,2,3, 4, 5, 6])
     args = parser.parse_args()
 
     args.log_path = os.path.join(args.base_log_dir, args.exp_name + "/")

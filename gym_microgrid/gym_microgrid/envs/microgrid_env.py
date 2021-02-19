@@ -205,28 +205,48 @@ class MicrogridEnv(gym.Env):
 
         # Manually set battery numbers and PV sizes
 
-        ## constant batt and PV
+        ## large and constant batt and PV
         if self.complex_batt_pv_scenario == 1:
             battery_nums = [50]*self.number_of_participants
             pvsizes = [100]*self.number_of_participants
 
         ## small PV sizes
         elif self.complex_batt_pv_scenario ==2: 
-            pvsizes = [0,10,100,10,0,0,0,55,10,10]
-            battery_nums = [0,0,50,30,50,0,0,10,40,50]
+            pvsizes = [ 0, 10, 100, 10, 0, 0, 0, 55, 10, 10 ]
+            battery_nums = [ 0, 0, 50, 30, 50, 0, 0, 10, 40, 50 ]
 
         ## medium PV sizes and different
-        else:
-            pvsizes = [70,110,400,70,30,0,0,55,10,20]
-            battery_nums = [0,0,150,30,50,0,0,100,40,150]
+        elif self.complex_batt_pv_scenario == 3:
+            pvsizes = [ 70, 110, 400, 70, 30, 0, 0, 55, 10, 20 ]
+            battery_nums = [ 0, 0, 150, 30, 50, 0, 0, 100, 40, 150]
 
-        # Get energy from building_data.csv file, each office building has readings in kWh. Interpolate to fill missing values
+        ## no batteries 
+        elif self.complex_batt_pv_scenario == 4:
+            pvsizes = [ 70, 110, 400, 70, 30, 0, 0, 55, 10, 20 ]
+            battery_nums = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+        
+        # no solar 
+        elif self.complex_batt_pv_scenario == 5:
+            pvsizes = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+            battery_nums = [ 0, 0, 150, 30, 50, 0, 0, 100, 40, 150 ]
+        
+        # nothing at all 
+        elif self.complex_batt_pv_scenario == 6:
+            pvsizes = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+            battery_nums = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+
+        # wrong number 
+        else:
+            print("you've inputted an incorrect scenario")
+            raise AssertionError
+
+        # Get energy from building_data.csv file,  each office building has readings in kWh. Interpolate to fill missing values
         # df = pd.read_csv('/Users/utkarshapets/Documents/Research/Optimisation attempts/building_data.csv').interpolate()
         df = pd.read_csv('../building_data.csv').interpolate().fillna(0)
         building_names = df.columns[5:] # Skip first few columns 
         for i in range(len(building_names)):
             name = building_names[i]
-            prosumer = Prosumer(name, np.squeeze(df[[name]].values), np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
+            prosumer = Prosumer(name, np.squeeze(df[[name]].values), .001*np.squeeze(df[['PV (W)']].values), battery_num = battery_nums[i], pv_size = pvsizes[i])
             prosumer_dict[name] = prosumer
 
         return prosumer_dict
@@ -424,6 +444,9 @@ class MicrogridEnv(gym.Env):
         info = {}
 
         # data frame logger. Delete soon 
+
+        if not self.iteration % 100:
+            print("Iteration: " + str(self.iteration) + " reward: " + str(reward))
 
         if ((not self.iteration % 10) & (self.iteration > 10000)) or self.iteration>19500:
 
