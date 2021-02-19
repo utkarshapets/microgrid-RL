@@ -36,9 +36,9 @@ python StableBaselines.py sac --exp_name=2021_02_18_ms_large_d --reward_function
 python StableBaselines.py sac --exp_name=2021_02_18_ms_medium_d --reward_function="market_solving" --pb_scenario=2 &
 python StableBaselines.py sac --exp_name=2021_02_18_ms_small_d --reward_function="market_solving" --pb_scenario=3 &
 ## profit maximizing
-python StableBaselines.py sac --exp_name=2021_02_18_pm_large_c --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_c --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_small_c --reward_function="market_solving" --pb_scenario=3 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_large_d --reward_function="market_solving" --pb_scenario=1 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_d --reward_function="market_solving" --pb_scenario=2 &
-python StableBaselines.py sac --exp_name=2021_02_18_pm_small_d --reward_function="market_solving" --pb_scenario=3
+python StableBaselines.py sac --exp_name=2021_02_18_pm_large_c --reward_function="profit_maximizing" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_c --reward_function="profit_maximizing" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_small_c --reward_function="profit_maximizing" --pb_scenario=3 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_large_d --reward_function="profit_maximizing" --pb_scenario=1 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_medium_d --reward_function="profit_maximizing" --pb_scenario=2 &
+python StableBaselines.py sac --exp_name=2021_02_18_pm_small_d --reward_function="profit_maximizing" --pb_scenario=3
